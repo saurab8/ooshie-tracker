@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ozzie Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+  :root{
+    --paper:#F6F1E4;
+    --ink:#1F2A24;
+    --line:#D8CFB8;
+    --moss:#3F5D46;
+    --moss-dark:#2A3F30;
+    --clay:#B5563C;
+    --gold:#C79A3B;
+    --card:#FFFDF7;
+    --have:#3F5D46;
+    --missing:#B5563C;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Iowan Old Style','Georgia',serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:76px;
+  }
+  .label-font{
+    font-family:'Courier New',monospace;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+  }
+
+  header{
+    padding:18px 18px 12px;
+    border-bottom:2px solid var(--ink);
+    background:var(--paper);
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  header h1{
+    margin:0;
+    font-size:1.35rem;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  header .tag{
+    font-size:0.68rem;
+    color:var(--moss-dark);
+    margin-top:4px;
+  }
+
+  .progress-wrap{
+    padding:12px 18px 0;
+  }
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:0.7rem;
+    margin-bottom:6px;
+  }
+  .progress-row .count{
+    font-size:1rem;
+    font-weight:700;
+    color:var(--moss-dark);
+    font-family:'Courier New',monospace;
+  }
+  .progress-bar{
+    height:7px;
+    background:var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--moss);
+    transition:width 0.3s ease;
+  }
+
+  nav.top-tabs{
+    display:flex;
+    gap:0;
+    margin:14px 18px 0;
+    border-bottom:2px solid var(--ink);
+  }
+  nav.top-tabs button{
+    flex:1;
+    background:none;
+    border:none;
+    font-family:'Courier New',monospace;
+    font-size:0.64rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:9px 2px;
+    color:var(--ink);
+    opacity:0.5;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    margin-bottom:-2px;
+  }
+  nav.top-tabs button.active{
+    opacity:1;
+    border-bottom:3px solid var(--clay);
+    font-weight:700;
+  }
+
+  nav.set-tabs{
+    display:flex;
+    overflow-x:auto;
+    gap:6px;
+    padding:12px 18px 4px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  nav.set-tabs::-webkit-scrollbar{display:none;}
+  nav.set-tabs button{
+    flex:0 0 auto;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    font-family:'Courier New',monospace;
+    font-size:0.62rem;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:7px 12px;
+    color:var(--ink);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  nav.set-tabs button.active{
+    background:var(--moss);
+    color:var(--paper);
+    border-color:var(--moss);
+    font-weight:700;
+  }
+
+  main{
+    padding:8px 18px 40px;
+    max-width:640px;
+    margin:0 auto;
+  }
+
+  .set-block{
+    margin-bottom:16px;
+  }
+  .set-title{
+    font-family:'Courier New',monospace;
+    font-size:0.7rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--moss-dark);
+    border-bottom:1px solid var(--line);
+    padding-bottom:6px;
+    margin-bottom:8px;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  .ozzie-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px 12px 8px 8px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .ozzie-card.missing{
+    opacity:0.55;
+  }
+  .ozzie-photo{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    background:var(--line);
+    flex-shrink:0;
+    background-size:cover;
+    background-position:center;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Courier New',monospace;
+    font-size:0.55rem;
+    color:var(--moss-dark);
+    text-align:center;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .ozzie-status-dot{
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    flex-shrink:0;
+    background:var(--missing);
+  }
+  .ozzie-card.have .ozzie-status-dot{
+    background:var(--have);
+  }
+  .ozzie-name{
+    flex:1;
+    font-size:0.92rem;
+    line-height:1.2;
+  }
+  .ozzie-name .badge{
+    display:block;
+    font-family:'Courier New',monospace;
+    font-size:0.6rem;
+    color:var(--gold);
+    letter-spacing:0.06em;
+    margin-top:1px;
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .stepper button{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    border:1px solid var(--ink);
+    background:var(--paper);
+    font-size:1rem;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Courier New',monospace;
+    color:var(--ink);
+  }
+  .stepper button:active{
+    background:var(--moss);
+    color:var(--paper);
+  }
+  .stepper .qty{
+    min-width:18px;
+    text-align:center;
+    font-family:'Courier New',monospace;
+    font-weight:700;
+    font-size:0.95rem;
+  }
+
+  .swap-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px;
+    margin-bottom:8px;
+  }
+  .swap-card .row1{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+    gap:10px;
+  }
+  .swap-card .row1 .ozzie-photo{width:36px;height:36px;}
+  .swap-card .have-count{
+    font-family:'Courier New',monospace;
+    font-size:0.68rem;
+    color:var(--moss-dark);
+    white-space:nowrap;
+  }
+  .swap-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    justify-content:space-between;
+  }
+  .swap-controls .swap-label{
+    font-family:'Courier New',monospace;
+    font-size:0.63rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--clay);
+  }
+
+  .empty-msg{
+    text-align:center;
+    padding:36px 20px;
+    color:var(--moss-dark);
+    font-size:0.88rem;
+    opacity:0.7;
+  }
+
+  .want-summary{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px;
+    margin-bottom:14px;
+    font-size:0.85rem;
+  }
+  .want-summary .swap-total{
+    font-family:'Courier New',monospace;
+    font-weight:700;
+    color:var(--clay);
+  }
+
+  .want-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px 12px 8px 8px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .want-card .ozzie-name{font-size:0.88rem;}
+  .want-card .ozzie-photo{width:36px;height:36px;}
+
+  .match-section{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:14px;
+    text-align:center;
+  }
+  .match-section h3{
+    margin:0 0 6px;
+    font-size:0.95rem;
+  }
+  .match-section p{
+    font-size:0.78rem;
+    color:var(--moss-dark);
+    margin:0 0 12px;
+  }
+  .big-btn{
+    background:var(--moss);
+    color:var(--paper);
+    border:none;
+    border-radius:8px;
+    padding:12px 20px;
+    font-family:'Courier New',monospace;
+    font-size:0.72rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    cursor:pointer;
+    width:100%;
+  }
+  .big-btn.secondary{
+    background:var(--paper);
+    color:var(--ink);
+    border:1px solid var(--ink);
+  }
+  #qrCanvasWrap{
+    display:flex;
+    justify-content:center;
+    margin:14px 0;
+  }
+  #qrCanvasWrap canvas{
+    border:1px solid var(--line);
+    border-radius:8px;
+  }
+  video#scanVideo{
+    width:100%;
+    border-radius:8px;
+    border:1px solid var(--line);
+    margin:10px 0;
+  }
+  .match-result{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px;
+    margin-bottom:10px;
+  }
+  .match-result h4{
+    margin:0 0 8px;
+    font-family:'Courier New',monospace;
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--moss-dark);
+  }
+  .match-row{
+    display:flex;
+    justify-content:space-between;
+    padding:5px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:0.85rem;
+  }
+  .match-row:last-child{border-bottom:none;}
+  .match-row .arrow{
+    color:var(--clay);
+    font-family:'Courier New',monospace;
+    margin:0 6px;
+  }
+  .no-match{
+    text-align:center;
+    color:var(--moss-dark);
+    opacity:0.7;
+    font-size:0.85rem;
+    padding:16px;
+  }
+
+  footer.stats{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:var(--ink);
+    color:var(--paper);
+    padding:6px 18px;
+    font-family:'Courier New',monospace;
+    font-size:0.6rem;
+    letter-spacing:0.05em;
+    text-align:center;
+    z-index:20;
+  }
+  footer.stats .stats-line{
+    display:block;
+  }
+  footer.stats .links-line{
+    display:block;
+    margin-top:2px;
+    opacity:0.85;
+  }
+  footer.stats a{
+    color:var(--paper);
+    text-decoration:underline;
+  }
+  footer.stats img.logo{
+    height:14px;
+    vertical-align:middle;
+    margin-right:4px;
+  }
+
+  .save-flash{
+    position:fixed;
+    bottom:40px;
+    left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--moss);
+    color:var(--paper);
+    font-family:'Courier New',monospace;
+    font-size:0.63rem;
+    padding:6px 14px;
+    border-radius:20px;
+    opacity:0;
+    transition:opacity 0.25s ease, transform 0.25s ease;
+    pointer-events:none;
+    z-index:30;
+  }
+  .save-flash.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Ozzie Tracker</h1>
+  <div class="tag">40 characters &middot; track, swap, want, match</div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-row">
+    <span class="label-font">Collected</span>
+    <span class="count" id="progressCount">0 / 40</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+</div>
+
+<nav class="top-tabs">
+  <button class="top-tab-btn active" data-top="collection">Collection</button>
+  <button class="top-tab-btn" data-top="swap">Swap</button>
+  <button class="top-tab-btn" data-top="want">Want</button>
+  <button class="top-tab-btn" data-top="match">Match</button>
+</nav>
+
+<nav class="set-tabs" id="setTabs"></nav>
+
+<main>
+  <div id="view-collection"></div>
+  <div id="view-swap" style="display:none;"></div>
+  <div id="view-want" style="display:none;"></div>
+  <div id="view-match" style="display:none;"></div>
+</main>
+
+<div class="save-flash" id="saveFlash">saved</div>
+
+<footer class="stats">
+  <span class="stats-line" id="uniqueUsers">— unique collectors have used this tracker —</span>
+  <span class="links-line"><a href="https://techtyra.com.au" target="_blank" rel="noopener"><img class="logo" src="assets/techtyra-logo.png" alt="TechTyra">Built by TechTyra</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="contact.html">Contact</a></span>
+</footer>
+
+<script>
+(function(){
+
+  const OZZIES = [
+    {set:"Moana", items:["Moana","Maui","Pua","Hei Hei","Kakamora"]},
+    {set:"Toy Story 5", items:["Jessie","Woody","Buzz Lightyear","Bullseye","Lilypad"]},
+    {set:"Spider-Man", items:["Spider-Man","Hulk","Tombstone","Scorpion","Tarantula"]},
+    {set:"Mandalorian", items:["Mandalorian","Grogu","Anzellan","Zeb","Stormtrooper"]},
+    {set:"Disney", items:["Elsa","Anna","Stitch","Lilo","Judy Hopps"]},
+    {set:"Pixar", items:["Mike","Sully","Anxiety","Joy","Lightning McQueen"]},
+    {set:"Marvel", items:["The Thing","Wolverine","Doctor Doom","Thor","Gambit"]},
+    {set:"Star Wars", items:["Darth Vader","C-3PO","Princess Leia","Luke Skywalker","R2-D2"]}
+  ];
+
+  function slugify(str){
+    return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  const ALL_IDS = [];
+  OZZIES.forEach(s => s.items.forEach(name => ALL_IDS.push(setKey(s.set, name))));
+
+  function setKey(set, name){ return set + "::" + name; }
+  function imgPath(set, name){
+    return `images/${slugify(set)}/${slugify(name)}.jpg`;
+  }
+
+  const STORAGE_KEY = "ozzie-tracker-data-v2";
+  const USER_FLAG_KEY = "ozzie-tracker-counted-v1";
+
+  let state = loadState();
+  let activeSetIndex = 0;
+  let activeTop = 'collection';
+
+  function loadState(){
+    let raw = null;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){}
+    let parsed = raw ? JSON.parse(raw) : {};
+    let counts = parsed.counts || {};
+    let swap = parsed.swap || {};
+    let want = parsed.want || {};
+    ALL_IDS.forEach(id => {
+      if(typeof counts[id] !== "number") counts[id] = 0;
+      if(typeof swap[id] !== "number") swap[id] = 0;
+    });
+    return {counts, swap, want};
+  }
+
+  function saveState(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      flashSave();
+    }catch(e){}
+  }
+
+  let flashTimer = null;
+  function flashSave(){
+    const el = document.getElementById('saveFlash');
+    el.classList.add('show');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(()=> el.classList.remove('show'), 700);
+  }
+
+  function photoTile(set, name){
+    const src = imgPath(set, name);
+    const div = document.createElement('div');
+    div.className = 'ozzie-photo';
+    div.style.backgroundImage = `url('${src}')`;
+    div.textContent = '';
+    const fallback = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const img = new Image();
+    img.onerror = () => { div.style.backgroundImage = 'none'; div.textContent = fallback; };
+    img.src = src;
+    return div;
+  }
+
+  async function trackUniqueUser(){
+    try{
+      const already = localStorage.getItem(USER_FLAG_KEY);
+      const method = already ? 'GET' : 'POST';
+      if(!already) localStorage.setItem(USER_FLAG_KEY, "1");
+      const resp = await fetch('/api/visitor', { method });
+      if(!resp.ok) throw new Error('bad response');
+      const data = await resp.json();
+      renderUserCount(data.count);
+    }catch(e){
+      renderUserCount(null);
+    }
+  }
+
+  function renderUserCount(n){
+    const el = document.getElementById('uniqueUsers');
+    if(n === null || n === undefined){
+      el.textContent = "unique collector count unavailable";
+    } else {
+      el.textContent = n + (n === 1 ? " unique collector has" : " unique collectors have") + " used this tracker";
+    }
+  }
+
+  function renderSetTabs(){
+    const nav = document.getElementById('setTabs');
+    if(activeTop !== 'collection'){
+      nav.style.display = 'none';
+      return;
+    }
+    nav.style.display = 'flex';
+    nav.innerHTML = "";
+    OZZIES.forEach((s, i) => {
+      const btn = document.createElement('button');
+      btn.textContent = s.set;
+      btn.className = i === activeSetIndex ? 'active' : '';
+      btn.addEventListener('click', () => {
+        activeSetIndex = i;
+        renderSetTabs();
+        renderCollection();
+      });
+      nav.appendChild(btn);
+    });
+  }
+
+  function renderCollection(){
+    const root = document.getElementById('view-collection');
+    root.innerHTML = "";
+    const s = OZZIES[activeSetIndex];
+
+    const block = document.createElement('div');
+    block.className = 'set-block';
+
+    const haveInSet = s.items.filter(n => state.counts[setKey(s.set,n)] > 0).length;
+    const title = document.createElement('div');
+    title.className = 'set-title';
+    title.innerHTML = `<span>${s.set}</span><span>${haveInSet}/${s.items.length}</span>`;
+    block.appendChild(title);
+
+    s.items.forEach(name => {
+      const id = setKey(s.set, name);
+      const qty = state.counts[id];
+      const card = document.createElement('div');
+      card.className = 'ozzie-card ' + (qty > 0 ? 'have' : 'missing');
+
+      card.appendChild(photoTile(s.set, name));
+
+      const dot = document.createElement('span');
+      dot.className = 'ozzie-status-dot';
+      card.appendChild(dot);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'ozzie-name';
+      nameSpan.innerHTML = `${name}${qty > 1 ? `<span class="badge">${qty} in hand</span>` : ''}`;
+      card.appendChild(nameSpan);
+
+      const stepper = document.createElement('span');
+      stepper.className = 'stepper';
+      stepper.innerHTML = `
+        <button data-action="dec" data-id="${id}" aria-label="Decrease ${name}">–</button>
+        <span class="qty">${qty}</span>
+        <button data-action="inc" data-id="${id}" aria-label="Increase ${name}">+</button>
+      `;
+      card.appendChild(stepper);
+
+      block.appendChild(card);
+    });
+
+    root.appendChild(block);
+
+    root.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if(action === 'inc'){
+          state.counts[id] = (state.counts[id] || 0) + 1;
+        } else {
+          state.counts[id] = Math.max(0, (state.counts[id] || 0) - 1);
+          if(state.swap[id] > state.counts[id]) state.swap[id] = state.counts[id];
+        }
+        saveState();
+        updateProgress();
+        renderCollection();
+      });
+    });
+  }
+
+  function renderSwap(){
+    const root = document.getElementById('view-swap');
+    root.innerHTML = "";
+
+    const dupes = [];
+    OZZIES.forEach(s => s.items.forEach(name => {
+      const id = setKey(s.set, name);
+      if(state.counts[id] > 1) dupes.push({id, name, set:s.set, count:state.counts[id]});
+    }));
+
+    if(dupes.length === 0){
+      root.innerHTML = `<div class="empty-msg">No duplicates yet. Once you have more than 1 of an Ozzie, it'll show up here so you can mark how many you're happy to swap.</div>`;
+      return;
+    }
+
+    dupes.forEach(d => {
+      const swapQty = Math.min(state.swap[d.id] || 0, d.count);
+      const card = document.createElement('div');
+      card.className = 'swap-card';
+
+      const row1 = document.createElement('div');
+      row1.className = 'row1';
+      row1.appendChild(photoTile(d.set, d.name));
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'ozzie-name';
+      nameSpan.innerHTML = `${d.name}<span class="badge" style="color:var(--moss-dark)">${d.set}</span>`;
+      row1.appendChild(nameSpan);
+      const haveCount = document.createElement('span');
+      haveCount.className = 'have-count';
+      haveCount.textContent = `have ${d.count}`;
+      row1.appendChild(haveCount);
+      card.appendChild(row1);
+
+      const controls = document.createElement('div');
+      controls.className = 'swap-controls';
+      controls.innerHTML = `
+        <span class="swap-label">Willing to swap</span>
+        <span class="stepper">
+          <button data-action="swapdec" data-id="${d.id}" aria-label="Decrease swap amount for ${d.name}">–</button>
+          <span class="qty">${swapQty}</span>
+          <button data-action="swapinc" data-id="${d.id}" data-max="${d.count}" aria-label="Increase swap amount for ${d.name}">+</button>
+        </span>
+      `;
+      card.appendChild(controls);
+
+      root.appendChild(card);
+    });
+
+    root.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        const max = parseInt(btn.getAttribute('data-max') || "0", 10);
+        if(action === 'swapinc'){
+          state.swap[id] = Math.min(max, (state.swap[id] || 0) + 1);
+        } else {
+          state.swap[id] = Math.max(0, (state.swap[id] || 0) - 1);
+        }
+        saveState();
+        renderSwap();
+      });
+    });
+  }
+
+  function renderWant(){
+    const root = document.getElementById('view-want');
+    root.innerHTML = "";
+
+    const offering = [];
+    let totalOffered = 0;
+    OZZIES.forEach(s => s.items.forEach(name => {
+      const id = setKey(s.set, name);
+      if(state.swap[id] > 0){
+        offering.push({id, name, qty: state.swap[id]});
+        totalOffered += state.swap[id];
+      }
+    }));
+
+    const summary = document.createElement('div');
+    summary.className = 'want-summary';
+    if(offering.length === 0){
+      summary.innerHTML = `You haven't marked any Ozzies as swappable yet. Go to the <strong>Swap</strong> tab first, then come back here to say what you'd like in return.`;
+      root.appendChild(summary);
+    } else {
+      const offerLines = offering.map(o => `${o.name} (${o.qty})`).join(', ');
+      summary.innerHTML = `Offering <span class="swap-total">${totalOffered}</span> total: ${offerLines}`;
+      root.appendChild(summary);
+    }
+
+    const missing = [];
+    OZZIES.forEach(s => s.items.forEach(name => {
+      const id = setKey(s.set, name);
+      if(state.counts[id] === 0) missing.push({id, name, set:s.set});
+    }));
+
+    if(missing.length === 0){
+      const done = document.createElement('div');
+      done.className = 'empty-msg';
+      done.textContent = "You've got at least 1 of every Ozzie. Nothing missing to want.";
+      root.appendChild(done);
+      return;
+    }
+
+    let currentSet = null;
+    missing.forEach(m => {
+      if(m.set !== currentSet){
+        currentSet = m.set;
+        const h = document.createElement('div');
+        h.className = 'set-title';
+        h.innerHTML = `<span>${m.set}</span><span></span>`;
+        root.appendChild(h);
+      }
+      const wantQty = state.want[m.id] || 0;
+      const card = document.createElement('div');
+      card.className = 'want-card';
+      card.appendChild(photoTile(m.set, m.name));
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'ozzie-name';
+      nameSpan.textContent = m.name;
+      card.appendChild(nameSpan);
+      const stepper = document.createElement('span');
+      stepper.className = 'stepper';
+      stepper.innerHTML = `
+        <button data-action="wantdec" data-id="${m.id}" aria-label="Decrease want amount for ${m.name}">–</button>
+        <span class="qty">${wantQty}</span>
+        <button data-action="wantinc" data-id="${m.id}" aria-label="Increase want amount for ${m.name}">+</button>
+      `;
+      card.appendChild(stepper);
+      root.appendChild(card);
+    });
+
+    root.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if(action === 'wantinc'){
+          state.want[id] = (state.want[id] || 0) + 1;
+        } else {
+          state.want[id] = Math.max(0, (state.want[id] || 0) - 1);
+          if(state.want[id] === 0) delete state.want[id];
+        }
+        saveState();
+        renderWant();
+      });
+    });
+  }
+
+  let scanStream = null;
+  let scanRAF = null;
+
+  function buildMyPayload(){
+    const offer = [];
+    const want = [];
+    OZZIES.forEach(s => s.items.forEach(name => {
+      const id = setKey(s.set, name);
+      if(state.swap[id] > 0) offer.push({n: name, s: s.set, q: state.swap[id]});
+      if(state.want[id] > 0) want.push({n: name, s: s.set, q: state.want[id]});
+    }));
+    return { offer, want };
+  }
+
+  function renderMatch(){
+    const root = document.getElementById('view-match');
+    root.innerHTML = "";
+
+    const genSection = document.createElement('div');
+    genSection.className = 'match-section';
+    genSection.innerHTML = `
+      <h3>Your swap code</h3>
+      <p>Generate a QR of what you're offering and what you want. Show it to another collector.</p>
+      <button class="big-btn" id="genQrBtn">Generate my QR code</button>
+      <div id="qrCanvasWrap"></div>
+    `;
+    root.appendChild(genSection);
+
+    const scanSection = document.createElement('div');
+    scanSection.className = 'match-section';
+    scanSection.innerHTML = `
+      <h3>Scan their code</h3>
+      <p>Scan someone else's QR to see if you can swap.</p>
+      <button class="big-btn secondary" id="scanQrBtn">Scan a QR code</button>
+      <video id="scanVideo" style="display:none;" playsinline muted></video>
+      <canvas id="scanCanvas" style="display:none;"></canvas>
+    `;
+    root.appendChild(scanSection);
+
+    const resultsWrap = document.createElement('div');
+    resultsWrap.id = 'matchResults';
+    root.appendChild(resultsWrap);
+
+    document.getElementById('genQrBtn').addEventListener('click', () => {
+      const payload = buildMyPayload();
+      if(payload.offer.length === 0 && payload.want.length === 0){
+        document.getElementById('qrCanvasWrap').innerHTML = `<div class="no-match">Mark some Ozzies to swap and want first, on the Swap and Want tabs.</div>`;
+        return;
+      }
+      const json = JSON.stringify(payload);
+      const wrap = document.getElementById('qrCanvasWrap');
+      wrap.innerHTML = "";
+      const canvas = document.createElement('canvas');
+      wrap.appendChild(canvas);
+      QRCode.toCanvas(canvas, json, { width: 220, margin: 1 }, function(err){
+        if(err) wrap.innerHTML = `<div class="no-match">Could not generate QR — too much data. Try marking fewer items.</div>`;
+      });
+    });
+
+    document.getElementById('scanQrBtn').addEventListener('click', startScan);
+  }
+
+  function startScan(){
+    const video = document.getElementById('scanVideo');
+    const canvas = document.getElementById('scanCanvas');
+    video.style.display = 'block';
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(stream => {
+        scanStream = stream;
+        video.srcObject = stream;
+        video.setAttribute('playsinline', true);
+        video.play();
+        scanRAF = requestAnimationFrame(tickScan);
+      })
+      .catch(() => {
+        document.getElementById('matchResults').innerHTML = `<div class="no-match">Camera access was blocked or unavailable. Check your browser's camera permission for this site.</div>`;
+      });
+
+    function tickScan(){
+      if(video.readyState === video.HAVE_ENOUGH_DATA){
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if(code){
+          stopScan();
+          handleScannedPayload(code.data);
+          return;
+        }
+      }
+      scanRAF = requestAnimationFrame(tickScan);
+    }
+  }
+
+  function stopScan(){
+    if(scanRAF) cancelAnimationFrame(scanRAF);
+    if(scanStream) scanStream.getTracks().forEach(t => t.stop());
+    const video = document.getElementById('scanVideo');
+    if(video) video.style.display = 'none';
+  }
+
+  function handleScannedPayload(raw){
+    let theirs;
+    try{ theirs = JSON.parse(raw); }catch(e){
+      document.getElementById('matchResults').innerHTML = `<div class="no-match">That QR code doesn't look like an Ozzie swap code.</div>`;
+      return;
+    }
+    const mine = buildMyPayload();
+
+    const iGiveThem = mine.offer.filter(o => theirs.want.some(w => w.n === o.n && w.s === o.s));
+    const theyGiveMe = theirs.offer.filter(o => mine.want.some(w => w.n === o.n && w.s === o.s));
+
+    const wrap = document.getElementById('matchResults');
+    wrap.innerHTML = "";
+
+    if(iGiveThem.length === 0 && theyGiveMe.length === 0){
+      wrap.innerHTML = `<div class="no-match">No matches this time — nothing you offer is on their want list, and nothing they offer is on yours.</div>`;
+      return;
+    }
+
+    const box = document.createElement('div');
+    box.className = 'match-result';
+    box.innerHTML = `<h4>Possible swap</h4>`;
+
+    const maxRows = Math.max(iGiveThem.length, theyGiveMe.length);
+    for(let i=0; i<maxRows; i++){
+      const give = iGiveThem[i];
+      const get = theyGiveMe[i];
+      const row = document.createElement('div');
+      row.className = 'match-row';
+      row.innerHTML = `
+        <span>${give ? 'You give: ' + give.n : ''}</span>
+        <span class="arrow">${(give && get) ? '⇄' : ''}</span>
+        <span>${get ? 'You get: ' + get.n : ''}</span>
+      `;
+      box.appendChild(row);
+    }
+    wrap.appendChild(box);
+  }
+
+  function updateProgress(){
+    const have = ALL_IDS.filter(id => state.counts[id] > 0).length;
+    document.getElementById('progressCount').textContent = `${have} / 40`;
+    document.getElementById('progressFill').style.width = (have/40*100) + '%';
+  }
+
+  function renderActiveTop(){
+    document.getElementById('view-collection').style.display = activeTop === 'collection' ? '' : 'none';
+    document.getElementById('view-swap').style.display = activeTop === 'swap' ? '' : 'none';
+    document.getElementById('view-want').style.display = activeTop === 'want' ? '' : 'none';
+    document.getElementById('view-match').style.display = activeTop === 'match' ? '' : 'none';
+
+    if(activeTop !== 'match') stopScan();
+
+    renderSetTabs();
+    if(activeTop === 'collection') renderCollection();
+    if(activeTop === 'swap') renderSwap();
+    if(activeTop === 'want') renderWant();
+    if(activeTop === 'match') renderMatch();
+  }
+
+  document.querySelectorAll('.top-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.top-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTop = btn.getAttribute('data-top');
+      renderActiveTop();
+    });
+  });
+
+  updateProgress();
+  renderActiveTop();
+  trackUniqueUser();
+
+})();
+</script>
+
+</body>
+</html>
