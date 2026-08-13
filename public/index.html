@@ -6,6 +6,13 @@
 <title>Ooshie Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', function(){
+    if(typeof QRCode === 'undefined'){
+      console.error('QRCode library failed to load from CDN');
+    }
+  });
+</script>
 <style>
   :root{
     --bg-top:#3A4A9E;
@@ -38,10 +45,8 @@
     overflow-x:hidden;
   }
   #appMain{
-    flex:1 0 auto;
     display:flex;
     flex-direction:column;
-    min-height:0;
   }
   .label-font{
     letter-spacing:0.04em;
@@ -111,6 +116,8 @@
     padding:8px 3px;
     color:var(--sub);
     cursor:pointer;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
   }
   nav.top-tabs button.active{
     background:var(--gold);
@@ -154,10 +161,6 @@
     padding:4px 16px 4px;
     max-width:640px;
     margin:0 auto;
-    flex:1;
-    overflow-y:auto;
-    overflow-x:hidden;
-    min-height:0;
     width:100%;
   }
 
@@ -266,14 +269,14 @@
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:14px;
-    margin-bottom:10px;
+    padding:8px 10px;
+    margin-bottom:6px;
   }
   .swap-card .row1{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:10px;
+    margin-bottom:6px;
     gap:10px;
   }
   .swap-card .row1 .ozzie-photo{width:40px;height:40px;}
@@ -286,14 +289,10 @@
     display:flex;
     align-items:center;
     gap:10px;
-    justify-content:space-between;
+    justify-content:flex-end;
   }
   .swap-controls .swap-label{
-    font-size:0.72rem;
-    letter-spacing:0.03em;
-    text-transform:uppercase;
-    color:var(--coral);
-    font-weight:600;
+    display:none;
   }
 
   .empty-msg{
@@ -322,13 +321,13 @@
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:10px 14px 10px 10px;
-    margin-bottom:10px;
+    padding:6px 10px 6px 6px;
+    margin-bottom:6px;
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:10px;
   }
-  .want-card .ozzie-name{font-size:1rem;}
+  .want-card .ozzie-name{font-size:0.92rem;}
   .want-card .ozzie-photo{width:40px;height:40px;}
 
   .match-section{
@@ -854,9 +853,9 @@
     const genSection = document.createElement('div');
     genSection.className = 'match-section';
     genSection.innerHTML = `
-      <h3>Your swap code</h3>
+      <h3>Your Swap Code</h3>
       <p>Generate a QR of what you're offering and what you want. Show it to another collector.</p>
-      <button class="big-btn" id="genQrBtn">Generate my QR code</button>
+      <button class="big-btn" id="genQrBtn">Generate my QR Code</button>
       <div id="qrCanvasWrap"></div>
     `;
     root.appendChild(genSection);
@@ -864,9 +863,9 @@
     const scanSection = document.createElement('div');
     scanSection.className = 'match-section';
     scanSection.innerHTML = `
-      <h3>Scan their code</h3>
+      <h3>Scan Their Code</h3>
       <p>Scan someone else's QR to see if you can swap.</p>
-      <button class="big-btn secondary" id="scanQrBtn">Scan a QR code</button>
+      <button class="big-btn secondary" id="scanQrBtn">Scan a QR Code</button>
       <video id="scanVideo" style="display:none;" playsinline muted></video>
       <canvas id="scanCanvas" style="display:none;"></canvas>
     `;
@@ -877,6 +876,10 @@
     root.appendChild(resultsWrap);
 
     document.getElementById('genQrBtn').addEventListener('click', () => {
+      if(typeof QRCode === 'undefined'){
+        document.getElementById('qrCanvasWrap').innerHTML = `<div class="no-match">QR code library did not load. Check your internet connection and reload the page.</div>`;
+        return;
+      }
       const payload = buildMyPayload();
       if(payload.offer.length === 0 && payload.want.length === 0){
         document.getElementById('qrCanvasWrap').innerHTML = `<div class="no-match">Mark some Ooshies to swap and want first, on the Swap and Want tabs.</div>`;
@@ -888,7 +891,10 @@
       const canvas = document.createElement('canvas');
       wrap.appendChild(canvas);
       QRCode.toCanvas(canvas, json, { width: 220, margin: 1 }, function(err){
-        if(err) wrap.innerHTML = `<div class="no-match">Could not generate QR — too much data. Try marking fewer items.</div>`;
+        if(err){
+          console.error('QR generation error:', err);
+          wrap.innerHTML = `<div class="no-match">Could not generate QR code. Try marking fewer items.</div>`;
+        }
       });
     });
 
