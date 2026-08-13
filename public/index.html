@@ -3,56 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ozzie Tracker</title>
+<title>Ooshie Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   :root{
-    --paper:#F6F1E4;
-    --ink:#1F2A24;
-    --line:#D8CFB8;
-    --moss:#3F5D46;
-    --moss-dark:#2A3F30;
-    --clay:#B5563C;
-    --gold:#C79A3B;
-    --card:#FFFDF7;
-    --have:#3F5D46;
-    --missing:#B5563C;
-    --radius:10px;
+    --bg-top:#3A4A9E;
+    --bg-bottom:#8FA3E8;
+    --panel:#2F3D82;
+    --panel-light:#4655A0;
+    --line:#5A69B5;
+    --ink:#F5F3FF;
+    --sub:#C3CBF2;
+    --gold:#F0C244;
+    --gold-dark:#B8912E;
+    --teal:#4FC3B0;
+    --coral:#E8674F;
+    --leaf:#7CB342;
+    --have:#4FC3B0;
+    --missing:#7C86C4;
+    --radius:12px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:var(--paper);
+    background:linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    background-attachment:fixed;
     color:var(--ink);
-    font-family:'Iowan Old Style','Georgia',serif;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
-    padding-bottom:76px;
+    padding-bottom:56px;
   }
   .label-font{
-    font-family:'Courier New',monospace;
-    letter-spacing:0.08em;
+    letter-spacing:0.04em;
     text-transform:uppercase;
   }
 
   header{
     padding:18px 18px 12px;
-    border-bottom:2px solid var(--ink);
-    background:var(--paper);
     position:sticky;
     top:0;
     z-index:20;
+    background:linear-gradient(180deg, var(--bg-top) 60%, transparent 100%);
   }
   header h1{
     margin:0;
-    font-size:1.35rem;
+    font-size:1.5rem;
     font-weight:700;
     letter-spacing:-0.01em;
+    color:var(--gold);
   }
   header .tag{
-    font-size:0.68rem;
-    color:var(--moss-dark);
+    font-size:0.85rem;
+    color:var(--sub);
     margin-top:4px;
   }
 
@@ -63,82 +67,71 @@
     display:flex;
     justify-content:space-between;
     align-items:baseline;
-    font-size:0.7rem;
+    font-size:0.8rem;
     margin-bottom:6px;
+    color:var(--sub);
   }
   .progress-row .count{
-    font-size:1rem;
+    font-size:1.1rem;
     font-weight:700;
-    color:var(--moss-dark);
-    font-family:'Courier New',monospace;
+    color:var(--gold);
   }
   .progress-bar{
-    height:7px;
-    background:var(--line);
+    height:8px;
+    background:rgba(255,255,255,0.15);
     border-radius:4px;
     overflow:hidden;
   }
   .progress-fill{
     height:100%;
-    background:var(--moss);
+    background:var(--teal);
     transition:width 0.3s ease;
   }
 
   nav.top-tabs{
     display:flex;
-    gap:0;
-    margin:14px 18px 0;
-    border-bottom:2px solid var(--ink);
+    gap:6px;
+    margin:16px 18px 0;
   }
   nav.top-tabs button{
     flex:1;
-    background:none;
-    border:none;
-    font-family:'Courier New',monospace;
-    font-size:0.64rem;
-    letter-spacing:0.04em;
-    text-transform:uppercase;
-    padding:9px 2px;
-    color:var(--ink);
-    opacity:0.5;
+    background:rgba(255,255,255,0.08);
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:10px 4px;
+    color:var(--sub);
     cursor:pointer;
-    border-bottom:3px solid transparent;
-    margin-bottom:-2px;
   }
   nav.top-tabs button.active{
-    opacity:1;
-    border-bottom:3px solid var(--clay);
-    font-weight:700;
+    background:var(--gold);
+    color:#2A2100;
+    border-color:var(--gold);
   }
 
   nav.set-tabs{
-    display:flex;
-    overflow-x:auto;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
     gap:6px;
-    padding:12px 18px 4px;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+    padding:14px 18px 4px;
   }
-  nav.set-tabs::-webkit-scrollbar{display:none;}
   nav.set-tabs button{
-    flex:0 0 auto;
-    background:var(--card);
+    background:var(--panel);
     border:1px solid var(--line);
-    border-radius:20px;
-    font-family:'Courier New',monospace;
-    font-size:0.62rem;
-    letter-spacing:0.03em;
-    text-transform:uppercase;
-    padding:7px 12px;
+    border-radius:10px;
+    font-size:0.72rem;
+    font-weight:600;
+    padding:10px 3px;
     color:var(--ink);
     cursor:pointer;
-    white-space:nowrap;
+    text-align:center;
+    line-height:1.15;
   }
   nav.set-tabs button.active{
-    background:var(--moss);
-    color:var(--paper);
-    border-color:var(--moss);
-    font-weight:700;
+    background:var(--teal);
+    color:#0d2e28;
+    border-color:var(--teal);
   }
 
   main{
@@ -151,52 +144,52 @@
     margin-bottom:16px;
   }
   .set-title{
-    font-family:'Courier New',monospace;
-    font-size:0.7rem;
-    letter-spacing:0.1em;
+    font-size:0.8rem;
+    font-weight:700;
+    letter-spacing:0.04em;
     text-transform:uppercase;
-    color:var(--moss-dark);
+    color:var(--sub);
     border-bottom:1px solid var(--line);
-    padding-bottom:6px;
-    margin-bottom:8px;
+    padding-bottom:8px;
+    margin-bottom:10px;
     display:flex;
     justify-content:space-between;
   }
 
   .ozzie-card{
-    background:var(--card);
+    background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:8px 12px 8px 8px;
-    margin-bottom:8px;
+    padding:10px 14px 10px 10px;
+    margin-bottom:10px;
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:12px;
   }
   .ozzie-card.missing{
-    opacity:0.55;
+    opacity:0.6;
   }
   .ozzie-photo{
-    width:44px;
-    height:44px;
-    border-radius:8px;
-    background:var(--line);
+    width:50px;
+    height:50px;
+    border-radius:10px;
+    background:var(--panel-light);
     flex-shrink:0;
     background-size:cover;
     background-position:center;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-family:'Courier New',monospace;
-    font-size:0.55rem;
-    color:var(--moss-dark);
+    font-size:0.62rem;
+    font-weight:700;
+    color:var(--sub);
     text-align:center;
     overflow:hidden;
     border:1px solid var(--line);
   }
   .ozzie-status-dot{
-    width:9px;
-    height:9px;
+    width:10px;
+    height:10px;
     border-radius:50%;
     flex-shrink:0;
     background:var(--missing);
@@ -206,68 +199,66 @@
   }
   .ozzie-name{
     flex:1;
-    font-size:0.92rem;
-    line-height:1.2;
+    font-size:1.05rem;
+    line-height:1.25;
+    color:var(--ink);
   }
   .ozzie-name .badge{
     display:block;
-    font-family:'Courier New',monospace;
-    font-size:0.6rem;
+    font-size:0.7rem;
     color:var(--gold);
-    letter-spacing:0.06em;
-    margin-top:1px;
+    letter-spacing:0.03em;
+    margin-top:2px;
   }
   .stepper{
     display:flex;
     align-items:center;
-    gap:8px;
+    gap:10px;
   }
   .stepper button{
-    width:28px;
-    height:28px;
+    width:34px;
+    height:34px;
     border-radius:50%;
-    border:1px solid var(--ink);
-    background:var(--paper);
-    font-size:1rem;
+    border:1px solid var(--gold);
+    background:transparent;
+    font-size:1.15rem;
     line-height:1;
     cursor:pointer;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-family:'Courier New',monospace;
-    color:var(--ink);
+    color:var(--gold);
   }
   .stepper button:active{
-    background:var(--moss);
-    color:var(--paper);
+    background:var(--gold);
+    color:#2A2100;
   }
   .stepper .qty{
-    min-width:18px;
+    min-width:20px;
     text-align:center;
-    font-family:'Courier New',monospace;
     font-weight:700;
-    font-size:0.95rem;
+    font-size:1.05rem;
+    color:var(--ink);
   }
 
   .swap-card{
-    background:var(--card);
+    background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:12px;
-    margin-bottom:8px;
+    padding:14px;
+    margin-bottom:10px;
   }
   .swap-card .row1{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:8px;
+    margin-bottom:10px;
     gap:10px;
   }
-  .swap-card .row1 .ozzie-photo{width:36px;height:36px;}
+  .swap-card .row1 .ozzie-photo{width:40px;height:40px;}
   .swap-card .have-count{
-    font-family:'Courier New',monospace;
-    font-size:0.68rem;
-    color:var(--moss-dark);
+    font-size:0.78rem;
+    color:var(--sub);
     white-space:nowrap;
   }
   .swap-controls{
@@ -277,82 +268,82 @@
     justify-content:space-between;
   }
   .swap-controls .swap-label{
-    font-family:'Courier New',monospace;
-    font-size:0.63rem;
-    letter-spacing:0.05em;
+    font-size:0.72rem;
+    letter-spacing:0.03em;
     text-transform:uppercase;
-    color:var(--clay);
+    color:var(--coral);
+    font-weight:600;
   }
 
   .empty-msg{
     text-align:center;
     padding:36px 20px;
-    color:var(--moss-dark);
-    font-size:0.88rem;
-    opacity:0.7;
+    color:var(--sub);
+    font-size:0.95rem;
+    opacity:0.85;
   }
 
   .want-summary{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:12px;
-    margin-bottom:14px;
-    font-size:0.85rem;
-  }
-  .want-summary .swap-total{
-    font-family:'Courier New',monospace;
-    font-weight:700;
-    color:var(--clay);
-  }
-
-  .want-card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:8px 12px 8px 8px;
-    margin-bottom:8px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .want-card .ozzie-name{font-size:0.88rem;}
-  .want-card .ozzie-photo{width:36px;height:36px;}
-
-  .match-section{
-    background:var(--card);
+    background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:14px;
+    margin-bottom:14px;
+    font-size:0.92rem;
+    color:var(--ink);
+  }
+  .want-summary .swap-total{
+    font-weight:700;
+    color:var(--coral);
+  }
+
+  .want-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:10px 14px 10px 10px;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .want-card .ozzie-name{font-size:1rem;}
+  .want-card .ozzie-photo{width:40px;height:40px;}
+
+  .match-section{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
     margin-bottom:14px;
     text-align:center;
   }
   .match-section h3{
     margin:0 0 6px;
-    font-size:0.95rem;
+    font-size:1.05rem;
+    color:var(--gold);
   }
   .match-section p{
-    font-size:0.78rem;
-    color:var(--moss-dark);
+    font-size:0.85rem;
+    color:var(--sub);
     margin:0 0 12px;
   }
   .big-btn{
-    background:var(--moss);
-    color:var(--paper);
+    background:var(--gold);
+    color:#2A2100;
     border:none;
-    border-radius:8px;
-    padding:12px 20px;
-    font-family:'Courier New',monospace;
-    font-size:0.72rem;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
+    border-radius:10px;
+    padding:13px 20px;
+    font-size:0.85rem;
+    font-weight:700;
+    letter-spacing:0.03em;
     cursor:pointer;
     width:100%;
   }
   .big-btn.secondary{
-    background:var(--paper);
+    background:transparent;
     color:var(--ink);
-    border:1px solid var(--ink);
+    border:1px solid var(--gold);
   }
   #qrCanvasWrap{
     display:flex;
@@ -360,7 +351,6 @@
     margin:14px 0;
   }
   #qrCanvasWrap canvas{
-    border:1px solid var(--line);
     border-radius:8px;
   }
   video#scanVideo{
@@ -370,38 +360,38 @@
     margin:10px 0;
   }
   .match-result{
-    background:var(--card);
+    background:var(--panel-light);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:12px;
+    padding:14px;
     margin-bottom:10px;
   }
   .match-result h4{
     margin:0 0 8px;
-    font-family:'Courier New',monospace;
-    font-size:0.68rem;
+    font-size:0.75rem;
     text-transform:uppercase;
-    letter-spacing:0.06em;
-    color:var(--moss-dark);
+    letter-spacing:0.04em;
+    color:var(--teal);
+    font-weight:700;
   }
   .match-row{
     display:flex;
     justify-content:space-between;
-    padding:5px 0;
+    padding:6px 0;
     border-bottom:1px dashed var(--line);
-    font-size:0.85rem;
+    font-size:0.92rem;
+    color:var(--ink);
   }
   .match-row:last-child{border-bottom:none;}
   .match-row .arrow{
-    color:var(--clay);
-    font-family:'Courier New',monospace;
+    color:var(--coral);
     margin:0 6px;
   }
   .no-match{
     text-align:center;
-    color:var(--moss-dark);
-    opacity:0.7;
-    font-size:0.85rem;
+    color:var(--sub);
+    opacity:0.85;
+    font-size:0.9rem;
     padding:16px;
   }
 
@@ -410,43 +400,34 @@
     bottom:0;
     left:0;
     right:0;
-    background:var(--ink);
-    color:var(--paper);
-    padding:6px 18px;
-    font-family:'Courier New',monospace;
-    font-size:0.6rem;
-    letter-spacing:0.05em;
+    background:var(--panel);
+    color:var(--sub);
+    padding:10px 18px;
+    font-size:0.72rem;
     text-align:center;
     z-index:20;
-  }
-  footer.stats .stats-line{
-    display:block;
-  }
-  footer.stats .links-line{
-    display:block;
-    margin-top:2px;
-    opacity:0.85;
+    border-top:1px solid var(--line);
   }
   footer.stats a{
-    color:var(--paper);
-    text-decoration:underline;
+    color:var(--gold);
+    text-decoration:none;
   }
   footer.stats img.logo{
     height:14px;
     vertical-align:middle;
-    margin-right:4px;
+    margin-right:5px;
   }
 
   .save-flash{
     position:fixed;
-    bottom:40px;
+    bottom:48px;
     left:50%;
     transform:translateX(-50%) translateY(10px);
-    background:var(--moss);
-    color:var(--paper);
-    font-family:'Courier New',monospace;
-    font-size:0.63rem;
-    padding:6px 14px;
+    background:var(--teal);
+    color:#0d2e28;
+    font-size:0.75rem;
+    font-weight:700;
+    padding:7px 16px;
     border-radius:20px;
     opacity:0;
     transition:opacity 0.25s ease, transform 0.25s ease;
@@ -466,7 +447,7 @@
 <body>
 
 <header>
-  <h1>Ozzie Tracker</h1>
+  <h1>Ooshie Tracker</h1>
   <div class="tag">40 characters &middot; track, swap, want, match</div>
 </header>
 
@@ -497,22 +478,25 @@
 <div class="save-flash" id="saveFlash">saved</div>
 
 <footer class="stats">
-  <span class="stats-line" id="uniqueUsers">— unique collectors have used this tracker —</span>
-  <span class="links-line"><a href="https://techtyra.com.au" target="_blank" rel="noopener"><img class="logo" src="assets/techtyra-logo.png" alt="TechTyra">Built by TechTyra</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="contact.html">Contact</a></span>
+  <span id="uniqueUsers">— unique collectors have used this tracker —</span><br>
+  <a href="https://techtyra.com.au" target="_blank" rel="noopener"><img class="logo" src="assets/techtyra-logo.png" alt="TechTyra">TechTyra</a>
+  &middot; <a href="privacy.html">Privacy</a>
+  &middot; <a href="terms.html">Terms</a>
+  &middot; <a href="contact.html">Contact</a>
 </footer>
 
 <script>
 (function(){
 
   const OZZIES = [
-    {set:"Moana", items:["Moana","Maui","Pua","Hei Hei","Kakamora"]},
-    {set:"Toy Story 5", items:["Jessie","Woody","Buzz Lightyear","Bullseye","Lilypad"]},
-    {set:"Spider-Man", items:["Spider-Man","Hulk","Tombstone","Scorpion","Tarantula"]},
-    {set:"Mandalorian", items:["Mandalorian","Grogu","Anzellan","Zeb","Stormtrooper"]},
-    {set:"Disney", items:["Elsa","Anna","Stitch","Lilo","Judy Hopps"]},
-    {set:"Pixar", items:["Mike","Sully","Anxiety","Joy","Lightning McQueen"]},
-    {set:"Marvel", items:["The Thing","Wolverine","Doctor Doom","Thor","Gambit"]},
-    {set:"Star Wars", items:["Darth Vader","C-3PO","Princess Leia","Luke Skywalker","R2-D2"]}
+    {set:"Moana", label:"Moana", items:["Moana","Maui","Pua","Hei Hei","Kakamora"]},
+    {set:"Toy Story 5", label:"Toy Story", items:["Jessie","Woody","Buzz Lightyear","Bullseye","Lilypad"]},
+    {set:"Spider-Man", label:"Spider-Man", items:["Spider-Man","Hulk","Tombstone","Scorpion","Tarantula"]},
+    {set:"Mandalorian", label:"Mandalorian", items:["Mandalorian","Grogu","Anzellan","Zeb","Stormtrooper"]},
+    {set:"Disney", label:"Disney", items:["Elsa","Anna","Stitch","Lilo","Judy Hopps"]},
+    {set:"Pixar", label:"Pixar", items:["Mike","Sully","Anxiety","Joy","Lightning McQueen"]},
+    {set:"Marvel", label:"Marvel", items:["The Thing","Wolverine","Doctor Doom","Thor","Gambit"]},
+    {set:"Star Wars", label:"Star Wars", items:["Darth Vader","C-3PO","Princess Leia","Luke Skywalker","R2-D2"]}
   ];
 
   function slugify(str){
@@ -532,6 +516,7 @@
 
   let state = loadState();
   let activeSetIndex = 0;
+  let activeWantSetIndex = 0;
   let activeTop = 'collection';
 
   function loadState(){
@@ -593,9 +578,9 @@
   function renderUserCount(n){
     const el = document.getElementById('uniqueUsers');
     if(n === null || n === undefined){
-      el.textContent = "unique collector count unavailable";
+      el.textContent = "Collector count unavailable right now";
     } else {
-      el.textContent = n + (n === 1 ? " unique collector has" : " unique collectors have") + " used this tracker";
+      el.textContent = n + (n === 1 ? " collector has" : " collectors have") + " used Ooshie Tracker";
     }
   }
 
@@ -605,11 +590,11 @@
       nav.style.display = 'none';
       return;
     }
-    nav.style.display = 'flex';
+    nav.style.display = 'grid';
     nav.innerHTML = "";
     OZZIES.forEach((s, i) => {
       const btn = document.createElement('button');
-      btn.textContent = s.set;
+      btn.textContent = s.label;
       btn.className = i === activeSetIndex ? 'active' : '';
       btn.addEventListener('click', () => {
         activeSetIndex = i;
@@ -631,7 +616,7 @@
     const haveInSet = s.items.filter(n => state.counts[setKey(s.set,n)] > 0).length;
     const title = document.createElement('div');
     title.className = 'set-title';
-    title.innerHTML = `<span>${s.set}</span><span>${haveInSet}/${s.items.length}</span>`;
+    title.innerHTML = `<span>${s.label}</span><span>${haveInSet}/${s.items.length}</span>`;
     block.appendChild(title);
 
     s.items.forEach(name => {
@@ -689,11 +674,11 @@
     const dupes = [];
     OZZIES.forEach(s => s.items.forEach(name => {
       const id = setKey(s.set, name);
-      if(state.counts[id] > 1) dupes.push({id, name, set:s.set, count:state.counts[id]});
+      if(state.counts[id] > 1) dupes.push({id, name, set:s.set, label:s.label, count:state.counts[id]});
     }));
 
     if(dupes.length === 0){
-      root.innerHTML = `<div class="empty-msg">No duplicates yet. Once you have more than 1 of an Ozzie, it'll show up here so you can mark how many you're happy to swap.</div>`;
+      root.innerHTML = `<div class="empty-msg">No duplicates yet. Once you have more than 1 of an Ooshie, it'll show up here so you can mark how many you're happy to swap.</div>`;
       return;
     }
 
@@ -707,7 +692,7 @@
       row1.appendChild(photoTile(d.set, d.name));
       const nameSpan = document.createElement('span');
       nameSpan.className = 'ozzie-name';
-      nameSpan.innerHTML = `${d.name}<span class="badge" style="color:var(--moss-dark)">${d.set}</span>`;
+      nameSpan.innerHTML = `${d.name}<span class="badge" style="color:var(--sub)">${d.label}</span>`;
       row1.appendChild(nameSpan);
       const haveCount = document.createElement('span');
       haveCount.className = 'have-count';
@@ -763,55 +748,54 @@
     const summary = document.createElement('div');
     summary.className = 'want-summary';
     if(offering.length === 0){
-      summary.innerHTML = `You haven't marked any Ozzies as swappable yet. Go to the <strong>Swap</strong> tab first, then come back here to say what you'd like in return.`;
-      root.appendChild(summary);
+      summary.innerHTML = `Pick anything below you'd like &mdash; you don't need to offer a swap first.`;
     } else {
       const offerLines = offering.map(o => `${o.name} (${o.qty})`).join(', ');
       summary.innerHTML = `Offering <span class="swap-total">${totalOffered}</span> total: ${offerLines}`;
-      root.appendChild(summary);
     }
+    root.appendChild(summary);
 
-    const missing = [];
-    OZZIES.forEach(s => s.items.forEach(name => {
+    const wantSetTabs = document.createElement('nav');
+    wantSetTabs.className = 'set-tabs';
+    wantSetTabs.style.padding = '0 0 12px';
+    OZZIES.forEach((s, i) => {
+      const btn = document.createElement('button');
+      btn.textContent = s.label;
+      btn.className = i === activeWantSetIndex ? 'active' : '';
+      btn.addEventListener('click', () => {
+        activeWantSetIndex = i;
+        renderWant();
+      });
+      wantSetTabs.appendChild(btn);
+    });
+    root.appendChild(wantSetTabs);
+
+    const s = OZZIES[activeWantSetIndex];
+    const block = document.createElement('div');
+    block.className = 'set-block';
+
+    s.items.forEach(name => {
       const id = setKey(s.set, name);
-      if(state.counts[id] === 0) missing.push({id, name, set:s.set});
-    }));
-
-    if(missing.length === 0){
-      const done = document.createElement('div');
-      done.className = 'empty-msg';
-      done.textContent = "You've got at least 1 of every Ozzie. Nothing missing to want.";
-      root.appendChild(done);
-      return;
-    }
-
-    let currentSet = null;
-    missing.forEach(m => {
-      if(m.set !== currentSet){
-        currentSet = m.set;
-        const h = document.createElement('div');
-        h.className = 'set-title';
-        h.innerHTML = `<span>${m.set}</span><span></span>`;
-        root.appendChild(h);
-      }
-      const wantQty = state.want[m.id] || 0;
+      const owned = state.counts[id] > 0;
+      const wantQty = state.want[id] || 0;
       const card = document.createElement('div');
       card.className = 'want-card';
-      card.appendChild(photoTile(m.set, m.name));
+      card.appendChild(photoTile(s.set, name));
       const nameSpan = document.createElement('span');
       nameSpan.className = 'ozzie-name';
-      nameSpan.textContent = m.name;
+      nameSpan.innerHTML = `${name}${owned ? `<span class="badge" style="color:var(--sub)">already have ${state.counts[id]}</span>` : ''}`;
       card.appendChild(nameSpan);
       const stepper = document.createElement('span');
       stepper.className = 'stepper';
       stepper.innerHTML = `
-        <button data-action="wantdec" data-id="${m.id}" aria-label="Decrease want amount for ${m.name}">–</button>
+        <button data-action="wantdec" data-id="${id}" aria-label="Decrease want amount for ${name}">–</button>
         <span class="qty">${wantQty}</span>
-        <button data-action="wantinc" data-id="${m.id}" aria-label="Increase want amount for ${m.name}">+</button>
+        <button data-action="wantinc" data-id="${id}" aria-label="Increase want amount for ${name}">+</button>
       `;
       card.appendChild(stepper);
-      root.appendChild(card);
+      block.appendChild(card);
     });
+    root.appendChild(block);
 
     root.querySelectorAll('button[data-action]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -875,7 +859,7 @@
     document.getElementById('genQrBtn').addEventListener('click', () => {
       const payload = buildMyPayload();
       if(payload.offer.length === 0 && payload.want.length === 0){
-        document.getElementById('qrCanvasWrap').innerHTML = `<div class="no-match">Mark some Ozzies to swap and want first, on the Swap and Want tabs.</div>`;
+        document.getElementById('qrCanvasWrap').innerHTML = `<div class="no-match">Mark some Ooshies to swap and want first, on the Swap and Want tabs.</div>`;
         return;
       }
       const json = JSON.stringify(payload);
@@ -936,7 +920,7 @@
   function handleScannedPayload(raw){
     let theirs;
     try{ theirs = JSON.parse(raw); }catch(e){
-      document.getElementById('matchResults').innerHTML = `<div class="no-match">That QR code doesn't look like an Ozzie swap code.</div>`;
+      document.getElementById('matchResults').innerHTML = `<div class="no-match">That QR code doesn't look like an Ooshie swap code.</div>`;
       return;
     }
     const mine = buildMyPayload();
