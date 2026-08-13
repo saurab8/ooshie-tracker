@@ -25,7 +25,7 @@
     --radius:12px;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;height:100%;}
   body{
     background:linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
     background-attachment:fixed;
@@ -33,7 +33,15 @@
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
-    padding-bottom:56px;
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+  }
+  #appMain{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
   }
   .label-font{
     letter-spacing:0.04em;
@@ -41,43 +49,42 @@
   }
 
   header{
-    padding:18px 18px 12px;
-    position:sticky;
-    top:0;
+    padding:12px 16px 8px;
     z-index:20;
-    background:linear-gradient(180deg, var(--bg-top) 60%, transparent 100%);
+    flex-shrink:0;
   }
   header h1{
     margin:0;
-    font-size:1.5rem;
+    font-size:1.25rem;
     font-weight:700;
     letter-spacing:-0.01em;
     color:var(--gold);
   }
   header .tag{
-    font-size:0.85rem;
+    font-size:0.72rem;
     color:var(--sub);
-    margin-top:4px;
+    margin-top:2px;
   }
 
   .progress-wrap{
-    padding:12px 18px 0;
+    padding:6px 16px 0;
+    flex-shrink:0;
   }
   .progress-row{
     display:flex;
     justify-content:space-between;
     align-items:baseline;
-    font-size:0.8rem;
-    margin-bottom:6px;
+    font-size:0.72rem;
+    margin-bottom:4px;
     color:var(--sub);
   }
   .progress-row .count{
-    font-size:1.1rem;
+    font-size:0.95rem;
     font-weight:700;
     color:var(--gold);
   }
   .progress-bar{
-    height:8px;
+    height:6px;
     background:rgba(255,255,255,0.15);
     border-radius:4px;
     overflow:hidden;
@@ -90,17 +97,18 @@
 
   nav.top-tabs{
     display:flex;
-    gap:6px;
-    margin:16px 18px 0;
+    gap:5px;
+    margin:8px 16px 0;
+    flex-shrink:0;
   }
   nav.top-tabs button{
     flex:1;
     background:rgba(255,255,255,0.08);
     border:1px solid var(--line);
-    border-radius:10px;
-    font-size:0.78rem;
+    border-radius:9px;
+    font-size:0.72rem;
     font-weight:600;
-    padding:10px 4px;
+    padding:8px 3px;
     color:var(--sub);
     cursor:pointer;
   }
@@ -113,20 +121,28 @@
   nav.set-tabs{
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:6px;
-    padding:14px 18px 4px;
+    gap:5px;
+    padding:6px 8px;
+    flex-shrink:0;
   }
   nav.set-tabs button{
     background:var(--panel);
     border:1px solid var(--line);
-    border-radius:10px;
-    font-size:0.72rem;
+    border-radius:9px;
+    font-size:0.66rem;
     font-weight:600;
-    padding:10px 3px;
+    padding:8px 2px;
     color:var(--ink);
     cursor:pointer;
     text-align:center;
     line-height:1.15;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  nav.set-tabs button.wide{
+    font-size:0.6rem;
+    padding:8px 1px;
   }
   nav.set-tabs button.active{
     background:var(--teal);
@@ -135,23 +151,27 @@
   }
 
   main{
-    padding:8px 18px 40px;
+    padding:4px 16px 4px;
     max-width:640px;
     margin:0 auto;
+    flex:1;
+    overflow-y:auto;
+    min-height:0;
+    width:100%;
   }
 
   .set-block{
-    margin-bottom:16px;
+    margin-bottom:6px;
   }
   .set-title{
-    font-size:0.8rem;
+    font-size:0.7rem;
     font-weight:700;
-    letter-spacing:0.04em;
+    letter-spacing:0.03em;
     text-transform:uppercase;
     color:var(--sub);
     border-bottom:1px solid var(--line);
-    padding-bottom:8px;
-    margin-bottom:10px;
+    padding-bottom:4px;
+    margin-bottom:6px;
     display:flex;
     justify-content:space-between;
   }
@@ -160,19 +180,19 @@
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:10px 14px 10px 10px;
-    margin-bottom:10px;
+    padding:6px 10px 6px 6px;
+    margin-bottom:6px;
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:10px;
   }
   .ozzie-card.missing{
     opacity:0.6;
   }
   .ozzie-photo{
-    width:50px;
-    height:50px;
-    border-radius:10px;
+    width:40px;
+    height:40px;
+    border-radius:9px;
     background:var(--panel-light);
     flex-shrink:0;
     background-size:cover;
@@ -180,7 +200,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:0.62rem;
+    font-size:0.58rem;
     font-weight:700;
     color:var(--sub);
     text-align:center;
@@ -199,29 +219,29 @@
   }
   .ozzie-name{
     flex:1;
-    font-size:1.05rem;
-    line-height:1.25;
+    font-size:0.92rem;
+    line-height:1.2;
     color:var(--ink);
   }
   .ozzie-name .badge{
     display:block;
-    font-size:0.7rem;
+    font-size:0.64rem;
     color:var(--gold);
-    letter-spacing:0.03em;
-    margin-top:2px;
+    letter-spacing:0.02em;
+    margin-top:1px;
   }
   .stepper{
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:8px;
   }
   .stepper button{
-    width:34px;
-    height:34px;
+    width:28px;
+    height:28px;
     border-radius:50%;
     border:1px solid var(--gold);
     background:transparent;
-    font-size:1.15rem;
+    font-size:1rem;
     line-height:1;
     cursor:pointer;
     display:flex;
@@ -396,31 +416,25 @@
   }
 
   footer.stats{
-    position:fixed;
-    bottom:0;
-    left:0;
-    right:0;
+    flex-shrink:0;
+    width:100%;
     background:var(--panel);
     color:var(--sub);
-    padding:10px 18px;
-    font-size:0.72rem;
+    padding:6px 4px;
+    font-size:0.64rem;
     text-align:center;
-    z-index:20;
     border-top:1px solid var(--line);
+    line-height:1.5;
   }
   footer.stats a{
     color:var(--gold);
     text-decoration:none;
-  }
-  footer.stats img.logo{
-    height:14px;
-    vertical-align:middle;
-    margin-right:5px;
+    font-weight:600;
   }
 
   .save-flash{
     position:fixed;
-    bottom:48px;
+    bottom:60px;
     left:50%;
     transform:translateX(-50%) translateY(10px);
     background:var(--teal);
@@ -466,20 +480,22 @@
   <button class="top-tab-btn" data-top="match">Match</button>
 </nav>
 
-<nav class="set-tabs" id="setTabs"></nav>
+<div id="appMain">
+  <main>
+    <div id="view-collection"></div>
+    <div id="view-swap" style="display:none;"></div>
+    <div id="view-want" style="display:none;"></div>
+    <div id="view-match" style="display:none;"></div>
+  </main>
 
-<main>
-  <div id="view-collection"></div>
-  <div id="view-swap" style="display:none;"></div>
-  <div id="view-want" style="display:none;"></div>
-  <div id="view-match" style="display:none;"></div>
-</main>
+  <nav class="set-tabs" id="setTabs"></nav>
+</div>
 
 <div class="save-flash" id="saveFlash">saved</div>
 
 <footer class="stats">
-  <span id="uniqueUsers">— unique collectors have used this tracker —</span><br>
-  <a href="https://techtyra.com.au" target="_blank" rel="noopener"><img class="logo" src="assets/techtyra-logo.png" alt="TechTyra">TechTyra</a>
+  <span id="uniqueUsers">— collectors have used Ooshie Tracker —</span><br>
+  Product of <a href="https://techtyra.com.au" target="_blank" rel="noopener">TechTyra</a>
   &middot; <a href="privacy.html">Privacy</a>
   &middot; <a href="terms.html">Terms</a>
   &middot; <a href="contact.html">Contact</a>
@@ -595,7 +611,8 @@
     OZZIES.forEach((s, i) => {
       const btn = document.createElement('button');
       btn.textContent = s.label;
-      btn.className = i === activeSetIndex ? 'active' : '';
+      const longName = s.label.length > 9;
+      btn.className = (longName ? 'wide ' : '') + (i === activeSetIndex ? 'active' : '');
       btn.addEventListener('click', () => {
         activeSetIndex = i;
         renderSetTabs();
@@ -748,7 +765,7 @@
     const summary = document.createElement('div');
     summary.className = 'want-summary';
     if(offering.length === 0){
-      summary.innerHTML = `Pick anything below you'd like &mdash; you don't need to offer a swap first.`;
+      summary.innerHTML = `Pick anything below that you'd like.`;
     } else {
       const offerLines = offering.map(o => `${o.name} (${o.qty})`).join(', ');
       summary.innerHTML = `Offering <span class="swap-total">${totalOffered}</span> total: ${offerLines}`;
@@ -761,7 +778,8 @@
     OZZIES.forEach((s, i) => {
       const btn = document.createElement('button');
       btn.textContent = s.label;
-      btn.className = i === activeWantSetIndex ? 'active' : '';
+      const longName = s.label.length > 9;
+      btn.className = (longName ? 'wide ' : '') + (i === activeWantSetIndex ? 'active' : '');
       btn.addEventListener('click', () => {
         activeWantSetIndex = i;
         renderWant();
