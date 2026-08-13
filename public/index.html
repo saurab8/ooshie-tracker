@@ -57,7 +57,7 @@
   }
 
   header{
-    padding:12px 16px 8px;
+    padding:12px 16px 0;
     z-index:20;
     flex-shrink:0;
   }
@@ -75,7 +75,7 @@
   }
 
   .progress-wrap{
-    padding:6px 16px 0;
+    padding:8px 16px 0;
     flex-shrink:0;
   }
   .progress-row{
@@ -132,7 +132,7 @@
     display:grid;
     grid-template-columns:repeat(4,1fr);
     gap:5px;
-    padding:8px 16px;
+    padding:8px 16px 0;
     flex-shrink:0;
   }
   nav.set-tabs button{
@@ -159,6 +159,10 @@
     color:#0d2e28;
     border-color:var(--teal);
   }
+  nav.want-set-tabs{
+    padding:0;
+    margin:8px 0;
+  }
 
   main{
     padding:8px 16px;
@@ -168,7 +172,7 @@
   }
 
   .set-block{
-    margin-bottom:6px;
+    margin-bottom:0;
   }
   .set-title{
     font-size:0.7rem;
@@ -178,7 +182,7 @@
     color:var(--sub);
     border-bottom:1px solid var(--line);
     padding-bottom:4px;
-    margin-bottom:6px;
+    margin-bottom:8px;
     display:flex;
     justify-content:space-between;
   }
@@ -188,7 +192,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:6px 10px 6px 6px;
-    margin-bottom:6px;
+    margin-bottom:8px;
     display:flex;
     align-items:center;
     gap:10px;
@@ -273,7 +277,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:6px 10px 6px 6px;
-    margin-bottom:6px;
+    margin-bottom:8px;
     display:flex;
     align-items:center;
     gap:10px;
@@ -293,7 +297,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:12px;
-    margin-bottom:6px;
+    margin-bottom:0;
     font-size:0.92rem;
     color:var(--ink);
   }
@@ -307,7 +311,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:6px 10px 6px 6px;
-    margin-bottom:6px;
+    margin-bottom:8px;
     display:flex;
     align-items:center;
     gap:10px;
@@ -320,7 +324,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:16px;
-    margin-bottom:14px;
+    margin-bottom:8px;
     text-align:center;
   }
   .match-section h3{
@@ -375,7 +379,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:14px;
-    margin-bottom:10px;
+    margin-bottom:8px;
   }
   .match-result h4{
     margin:0 0 8px;
@@ -570,18 +574,36 @@
     return div;
   }
 
-  async function trackUniqueUser(){
+  let visitorCountRequest = null;
+
+  async function trackUniqueUser(increment = false){
     try{
       const already = localStorage.getItem(USER_FLAG_KEY);
-      const method = already ? 'GET' : 'POST';
-      if(!already) localStorage.setItem(USER_FLAG_KEY, "1");
-      const resp = await fetch('/api/visitor', { method });
-      if(!resp.ok) throw new Error('bad response');
-      const data = await resp.json();
-      renderUserCount(data.count);
+      const shouldIncrement = increment && !already;
+      if(visitorCountRequest && shouldIncrement) return visitorCountRequest;
+
+      const request = (async () => {
+        const resp = await fetch('/api/visitor', {
+          method: shouldIncrement ? 'POST' : 'GET',
+          headers: shouldIncrement ? { 'X-Ooshie-Action': 'tracker-use' } : {}
+        });
+        if(!resp.ok) throw new Error('bad response');
+        const data = await resp.json();
+        if(shouldIncrement) localStorage.setItem(USER_FLAG_KEY, "1");
+        renderUserCount(data.count);
+      })();
+
+      if(shouldIncrement) visitorCountRequest = request;
+      await request;
     }catch(e){
-      renderUserCount(null);
+      if(!increment) renderUserCount(null);
+    }finally{
+      if(increment) visitorCountRequest = null;
     }
+  }
+
+  function recordTrackerUse(){
+    trackUniqueUser(true);
   }
 
   function renderUserCount(n){
@@ -589,7 +611,7 @@
     if(n === null || n === undefined){
       el.textContent = "Collector count unavailable right now";
     } else {
-      el.textContent = n + (n === 1 ? " collector has" : " collectors have") + " used Ooshie Tracker";
+      el.textContent = "Approximately " + n + (n === 1 ? " collector has" : " collectors have") + " used Ooshie Tracker";
     }
   }
 
@@ -664,12 +686,14 @@
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         const action = btn.getAttribute('data-action');
+        const previousCount = state.counts[id] || 0;
         if(action === 'inc'){
           state.counts[id] = (state.counts[id] || 0) + 1;
         } else {
           state.counts[id] = Math.max(0, (state.counts[id] || 0) - 1);
           if(state.swap[id] > state.counts[id]) state.swap[id] = state.counts[id];
         }
+        if(state.counts[id] !== previousCount) recordTrackerUse();
         saveState();
         updateProgress();
         renderCollection();
@@ -721,11 +745,13 @@
         const id = btn.getAttribute('data-id');
         const action = btn.getAttribute('data-action');
         const max = parseInt(btn.getAttribute('data-max') || "0", 10);
+        const previousSwap = state.swap[id] || 0;
         if(action === 'swapinc'){
           state.swap[id] = Math.min(max, (state.swap[id] || 0) + 1);
         } else {
           state.swap[id] = Math.max(0, (state.swap[id] || 0) - 1);
         }
+        if(state.swap[id] !== previousSwap) recordTrackerUse();
         saveState();
         renderSwap();
       });
@@ -757,8 +783,7 @@
     root.appendChild(summary);
 
     const wantSetTabs = document.createElement('nav');
-    wantSetTabs.className = 'set-tabs';
-    wantSetTabs.style.padding = '6px 0';
+    wantSetTabs.className = 'set-tabs want-set-tabs';
     OZZIES.forEach((s, i) => {
       const btn = document.createElement('button');
       btn.textContent = s.label;
@@ -803,12 +828,14 @@
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         const action = btn.getAttribute('data-action');
+        const previousWant = state.want[id] || 0;
         if(action === 'wantinc'){
           state.want[id] = (state.want[id] || 0) + 1;
         } else {
           state.want[id] = Math.max(0, (state.want[id] || 0) - 1);
           if(state.want[id] === 0) delete state.want[id];
         }
+        if((state.want[id] || 0) !== previousWant) recordTrackerUse();
         saveState();
         renderWant();
       });
@@ -880,6 +907,7 @@
           colorLight: '#ffffff',
           correctLevel: QRCode.CorrectLevel.M
         });
+        recordTrackerUse();
       }catch(ex){
         wrap.innerHTML = `<div class="no-match">Unexpected error: ${ex.message || ex}</div>`;
       }
@@ -1001,7 +1029,8 @@
 
   updateProgress();
   renderActiveTop();
-  trackUniqueUser();
+  // Page loads read the aggregate total but do not increment it.
+  trackUniqueUser(false);
 
 })();
 </script>
