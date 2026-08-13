@@ -269,31 +269,13 @@
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:8px 10px;
+    padding:6px 10px 6px 6px;
     margin-bottom:6px;
-  }
-  .swap-card .row1{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:6px;
-    gap:10px;
-  }
-  .swap-card .row1 .ozzie-photo{width:40px;height:40px;}
-  .swap-card .have-count{
-    font-size:0.78rem;
-    color:var(--sub);
-    white-space:nowrap;
-  }
-  .swap-controls{
     display:flex;
     align-items:center;
     gap:10px;
-    justify-content:flex-end;
   }
-  .swap-controls .swap-label{
-    display:none;
-  }
+  .swap-card .ozzie-photo{width:40px;height:40px;}
 
   .empty-msg{
     text-align:center;
@@ -307,8 +289,8 @@
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:14px;
-    margin-bottom:14px;
+    padding:12px;
+    margin-bottom:6px;
     font-size:0.92rem;
     color:var(--ink);
   }
@@ -705,30 +687,21 @@
       const card = document.createElement('div');
       card.className = 'swap-card';
 
-      const row1 = document.createElement('div');
-      row1.className = 'row1';
-      row1.appendChild(photoTile(d.set, d.name));
+      card.appendChild(photoTile(d.set, d.name));
+
       const nameSpan = document.createElement('span');
       nameSpan.className = 'ozzie-name';
-      nameSpan.innerHTML = `${d.name}<span class="badge" style="color:var(--sub)">${d.label}</span>`;
-      row1.appendChild(nameSpan);
-      const haveCount = document.createElement('span');
-      haveCount.className = 'have-count';
-      haveCount.textContent = `have ${d.count}`;
-      row1.appendChild(haveCount);
-      card.appendChild(row1);
+      nameSpan.innerHTML = `${d.name}<span class="badge">have ${d.count} &middot; ${d.label}</span>`;
+      card.appendChild(nameSpan);
 
-      const controls = document.createElement('div');
-      controls.className = 'swap-controls';
-      controls.innerHTML = `
-        <span class="swap-label">Willing to swap</span>
-        <span class="stepper">
-          <button data-action="swapdec" data-id="${d.id}" aria-label="Decrease swap amount for ${d.name}">–</button>
-          <span class="qty">${swapQty}</span>
-          <button data-action="swapinc" data-id="${d.id}" data-max="${d.count}" aria-label="Increase swap amount for ${d.name}">+</button>
-        </span>
+      const stepper = document.createElement('span');
+      stepper.className = 'stepper';
+      stepper.innerHTML = `
+        <button data-action="swapdec" data-id="${d.id}" aria-label="Decrease swap amount for ${d.name}">–</button>
+        <span class="qty">${swapQty}</span>
+        <button data-action="swapinc" data-id="${d.id}" data-max="${d.count}" aria-label="Increase swap amount for ${d.name}">+</button>
       `;
-      card.appendChild(controls);
+      card.appendChild(stepper);
 
       root.appendChild(card);
     });
@@ -775,7 +748,7 @@
 
     const wantSetTabs = document.createElement('nav');
     wantSetTabs.className = 'set-tabs';
-    wantSetTabs.style.padding = '0 0 12px';
+    wantSetTabs.style.padding = '6px 0';
     OZZIES.forEach((s, i) => {
       const btn = document.createElement('button');
       btn.textContent = s.label;
@@ -876,26 +849,29 @@
     root.appendChild(resultsWrap);
 
     document.getElementById('genQrBtn').addEventListener('click', () => {
-      if(typeof QRCode === 'undefined'){
-        document.getElementById('qrCanvasWrap').innerHTML = `<div class="no-match">QR code library did not load. Check your internet connection and reload the page.</div>`;
-        return;
-      }
-      const payload = buildMyPayload();
-      if(payload.offer.length === 0 && payload.want.length === 0){
-        document.getElementById('qrCanvasWrap').innerHTML = `<div class="no-match">Mark some Ooshies to swap and want first, on the Swap and Want tabs.</div>`;
-        return;
-      }
-      const json = JSON.stringify(payload);
       const wrap = document.getElementById('qrCanvasWrap');
       wrap.innerHTML = "";
-      const canvas = document.createElement('canvas');
-      wrap.appendChild(canvas);
-      QRCode.toCanvas(canvas, json, { width: 220, margin: 1 }, function(err){
-        if(err){
-          console.error('QR generation error:', err);
-          wrap.innerHTML = `<div class="no-match">Could not generate QR code. Try marking fewer items.</div>`;
+      try{
+        if(typeof QRCode === 'undefined'){
+          wrap.innerHTML = `<div class="no-match">QR library not loaded (QRCode is undefined). Check your connection and reload.</div>`;
+          return;
         }
-      });
+        const payload = buildMyPayload();
+        if(payload.offer.length === 0 && payload.want.length === 0){
+          wrap.innerHTML = `<div class="no-match">Mark some Ooshies to swap and want first, on the Swap and Want tabs.</div>`;
+          return;
+        }
+        const json = JSON.stringify(payload);
+        const canvas = document.createElement('canvas');
+        wrap.appendChild(canvas);
+        QRCode.toCanvas(canvas, json, { width: 220, margin: 1 }, function(err){
+          if(err){
+            wrap.innerHTML = `<div class="no-match">QR draw error: ${err.message || err}</div>`;
+          }
+        });
+      }catch(ex){
+        wrap.innerHTML = `<div class="no-match">Unexpected error: ${ex.message || ex}</div>`;
+      }
     });
 
     document.getElementById('scanQrBtn').addEventListener('click', startScan);
