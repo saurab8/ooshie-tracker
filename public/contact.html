@@ -3,62 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contact — Ooshie Tracker</title>
+<title>Contact - Ooshie Tracker</title>
 <style>
-  body{
-    background:#F6F1E4;
-    color:#1F2A24;
-    font-family:'Iowan Old Style','Georgia',serif;
-    max-width:520px;
-    margin:0 auto;
-    padding:24px 20px 60px;
-    line-height:1.6;
+  :root{
+    --bg-top:#3A4A9E;
+    --bg-bottom:#8FA3E8;
+    --panel:#2F3D82;
+    --line:#5A69B5;
+    --ink:#F5F3FF;
+    --sub:#C3CBF2;
+    --gold:#F0C244;
+    --teal:#4FC3B0;
+    --coral:#E8674F;
   }
-  h1{font-size:1.4rem;margin-bottom:6px;}
-  p.intro{font-size:0.9rem;color:#2A3F30;margin-bottom:20px;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;overflow-x:hidden;}
+  body{
+    background:linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    width:100%;
+  }
+  .wrap{
+    max-width:520px;
+    width:100%;
+    margin:0 auto;
+    padding:20px 16px 24px;
+    flex:1 0 auto;
+    box-sizing:border-box;
+  }
+  h1{font-size:1.3rem;margin:0 0 4px;color:var(--gold);}
+  p.intro{font-size:0.86rem;color:var(--sub);margin-bottom:18px;line-height:1.5;}
   .back{
     display:inline-block;
-    margin-bottom:20px;
-    font-family:'Courier New',monospace;
+    margin-bottom:18px;
     font-size:0.72rem;
     text-transform:uppercase;
-    letter-spacing:0.05em;
-    color:#3F5D46;
+    letter-spacing:0.04em;
+    color:var(--sub);
     text-decoration:none;
+    font-weight:600;
   }
   label{
     display:block;
-    font-family:'Courier New',monospace;
     font-size:0.68rem;
     text-transform:uppercase;
-    letter-spacing:0.05em;
-    color:#3F5D46;
+    letter-spacing:0.04em;
+    color:var(--sub);
     margin-bottom:5px;
     margin-top:14px;
+    font-weight:600;
   }
-  input, textarea{
+  input{
     width:100%;
     padding:10px 12px;
-    border:1px solid #D8CFB8;
-    border-radius:8px;
-    background:#FFFDF7;
-    font-family:'Iowan Old Style','Georgia',serif;
-    font-size:0.95rem;
-    color:#1F2A24;
+    border:1px solid var(--line);
+    border-radius:9px;
+    background:var(--panel);
+    font-family:inherit;
+    font-size:0.92rem;
+    color:var(--ink);
+    box-sizing:border-box;
   }
-  textarea{min-height:120px;resize:vertical;}
+  input::placeholder{color:var(--sub);opacity:0.6;}
   button{
     margin-top:18px;
     width:100%;
-    background:#3F5D46;
-    color:#F6F1E4;
+    background:var(--gold);
+    color:#2A2100;
     border:none;
-    border-radius:8px;
+    border-radius:9px;
     padding:12px 20px;
-    font-family:'Courier New',monospace;
-    font-size:0.72rem;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
+    font-size:0.8rem;
+    font-weight:700;
+    letter-spacing:0.03em;
     cursor:pointer;
   }
   button:disabled{opacity:0.6;cursor:default;}
@@ -66,41 +88,40 @@
     margin-top:14px;
     font-size:0.85rem;
     padding:10px 12px;
-    border-radius:8px;
+    border-radius:9px;
     display:none;
   }
   #formMsg.success{
     display:block;
-    background:#E4EEE6;
-    color:#2A3F30;
+    background:rgba(79,195,176,0.18);
+    color:var(--teal);
   }
   #formMsg.error{
     display:block;
-    background:#F5E1DA;
-    color:#B5563C;
+    background:rgba(232,103,79,0.18);
+    color:var(--coral);
   }
   footer{
-    margin-top:40px;
-    padding-top:16px;
-    border-top:1px solid #D8CFB8;
-    font-family:'Courier New',monospace;
-    font-size:0.68rem;
-    color:#3F5D46;
+    flex-shrink:0;
+    width:100%;
+    background:var(--panel);
+    color:var(--sub);
+    padding:8px 4px 6px;
+    font-size:0.64rem;
+    text-align:center;
+    border-top:1px solid var(--line);
+    line-height:1.5;
   }
-  footer a{color:#3F5D46;font-weight:700;}
-  footer img.logo{
-    height:16px;
-    vertical-align:middle;
-    margin-right:5px;
-  }
+  footer a{color:var(--gold);font-weight:600;text-decoration:none;}
 </style>
 </head>
 <body>
 
-<a class="back" href="index.html">&larr; Back to tracker</a>
+<div class="wrap">
+<a class="back" href="index.html">Back to tracker</a>
 
 <h1>Get in touch</h1>
-<p class="intro">Questions, bugs, or ideas about Ooshie Tracker &mdash; send a message and TechTyra will get back to you.</p>
+<p class="intro">Questions, bugs, or ideas about Ooshie Tracker. Send a message and TechTyra will get back to you.</p>
 
 <form id="contactForm">
   <input type="hidden" name="access_key" value="c6f64ea8-cb9e-445e-8f53-57768e995db9">
@@ -114,14 +135,18 @@
   <input type="email" id="email" name="email" required>
 
   <label for="message">Message</label>
-  <textarea id="message" name="message" required></textarea>
+  <input type="text" id="message" name="message" required placeholder="What would you like to tell us">
 
   <button type="submit" id="submitBtn">Send message</button>
   <div id="formMsg"></div>
 </form>
+</div>
 
 <footer>
-  Built by <a href="https://techtyra.com.au" target="_blank" rel="noopener"><img class="logo" src="assets/techtyra-logo.png" alt="TechTyra">TechTyra</a> &middot; <a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms &amp; Conditions</a>
+  Product of <a href="https://techtyra.com.au" target="_blank" rel="noopener">TechTyra</a>
+  &middot; <a href="privacy.html">Privacy</a>
+  &middot; <a href="terms.html">Terms</a>
+  &middot; <a href="contact.html">Contact</a>
 </footer>
 
 <script>
@@ -132,7 +157,7 @@
   form.addEventListener('submit', async function(e){
     e.preventDefault();
     btn.disabled = true;
-    btn.textContent = 'Sending...';
+    btn.textContent = 'Sending';
     msg.style.display = 'none';
     msg.className = '';
 
@@ -144,14 +169,14 @@
       });
       const data = await res.json();
       if(data.success){
-        msg.textContent = "Thanks — your message has been sent. We'll get back to you soon.";
+        msg.textContent = "Thanks, your message has been sent. We will get back to you soon.";
         msg.className = 'success';
         form.reset();
       } else {
         throw new Error(data.message || 'Something went wrong');
       }
     }catch(err){
-      msg.textContent = "Couldn't send your message right now. Please try again shortly.";
+      msg.textContent = "Could not send your message right now. Please try again shortly.";
       msg.className = 'error';
     }finally{
       btn.disabled = false;

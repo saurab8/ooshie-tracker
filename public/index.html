@@ -38,7 +38,7 @@
     overflow-x:hidden;
   }
   #appMain{
-    flex:1;
+    flex:1 0 auto;
     display:flex;
     flex-direction:column;
     min-height:0;
@@ -156,6 +156,7 @@
     margin:0 auto;
     flex:1;
     overflow-y:auto;
+    overflow-x:hidden;
     min-height:0;
     width:100%;
   }
@@ -420,11 +421,12 @@
     width:100%;
     background:var(--panel);
     color:var(--sub);
-    padding:6px 4px;
+    padding:8px 4px 6px;
     font-size:0.64rem;
     text-align:center;
     border-top:1px solid var(--line);
     line-height:1.5;
+    box-sizing:border-box;
   }
   footer.stats a{
     color:var(--gold);
@@ -480,6 +482,8 @@
   <button class="top-tab-btn" data-top="match">Match</button>
 </nav>
 
+<nav class="set-tabs" id="setTabs"></nav>
+
 <div id="appMain">
   <main>
     <div id="view-collection"></div>
@@ -487,8 +491,6 @@
     <div id="view-want" style="display:none;"></div>
     <div id="view-match" style="display:none;"></div>
   </main>
-
-  <nav class="set-tabs" id="setTabs"></nav>
 </div>
 
 <div class="save-flash" id="saveFlash">saved</div>
