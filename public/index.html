@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ooshie Tracker</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="assets/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
   window.addEventListener('DOMContentLoaded', function(){
     if(typeof QRCode === 'undefined'){
-      console.error('QRCode library failed to load from CDN');
+      console.error('QR code library failed to load');
     }
   });
 </script>
@@ -32,7 +32,7 @@
     --radius:12px;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;height:100%;}
+  html,body{margin:0;padding:0;min-height:100%;}
   body{
     background:linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
     background-attachment:fixed;
@@ -40,6 +40,7 @@
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
+    min-height:100dvh;
     display:flex;
     flex-direction:column;
     overflow-x:hidden;
@@ -47,6 +48,8 @@
   #appMain{
     display:flex;
     flex-direction:column;
+    flex:1 0 auto;
+    width:100%;
   }
   .label-font{
     letter-spacing:0.04em;
@@ -129,7 +132,7 @@
     display:grid;
     grid-template-columns:repeat(4,1fr);
     gap:5px;
-    padding:6px 8px;
+    padding:8px 16px;
     flex-shrink:0;
   }
   nav.set-tabs button{
@@ -158,7 +161,7 @@
   }
 
   main{
-    padding:4px 16px 4px;
+    padding:8px 16px;
     max-width:640px;
     margin:0 auto;
     width:100%;
@@ -355,6 +358,12 @@
   #qrCanvasWrap canvas{
     border-radius:8px;
   }
+  #qrCanvasWrap img{
+    width:220px;
+    height:220px;
+    max-width:100%;
+    border-radius:8px;
+  }
   video#scanVideo{
     width:100%;
     border-radius:8px;
@@ -408,6 +417,7 @@
     border-top:1px solid var(--line);
     line-height:1.5;
     box-sizing:border-box;
+    margin-top:auto;
   }
   footer.stats a{
     color:var(--gold);
@@ -862,12 +872,13 @@
           return;
         }
         const json = JSON.stringify(payload);
-        const canvas = document.createElement('canvas');
-        wrap.appendChild(canvas);
-        QRCode.toCanvas(canvas, json, { width: 220, margin: 1 }, function(err){
-          if(err){
-            wrap.innerHTML = `<div class="no-match">QR draw error: ${err.message || err}</div>`;
-          }
+        new QRCode(wrap, {
+          text: json,
+          width: 220,
+          height: 220,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
         });
       }catch(ex){
         wrap.innerHTML = `<div class="no-match">Unexpected error: ${ex.message || ex}</div>`;
