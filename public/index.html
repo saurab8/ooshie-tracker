@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ooshie Tracker</title>
 <script src="assets/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="assets/jsQR.js"></script>
 <script>
   window.addEventListener('DOMContentLoaded', function(){
     if(typeof QRCode === 'undefined'){
@@ -32,6 +32,7 @@
     --radius:12px;
   }
   *{box-sizing:border-box;}
+  button{touch-action:manipulation;}
   html,body{margin:0;padding:0;min-height:100%;}
   body{
     background:linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
@@ -361,11 +362,19 @@
   }
   #qrCanvasWrap canvas{
     border-radius:8px;
+    padding:12px;
+    background:#fff;
+    box-sizing:content-box;
+    max-width:calc(100% - 24px);
+    height:auto;
   }
   #qrCanvasWrap img{
-    width:220px;
-    height:220px;
-    max-width:100%;
+    width:260px;
+    height:260px;
+    max-width:calc(100% - 24px);
+    padding:12px;
+    background:#fff;
+    box-sizing:content-box;
     border-radius:8px;
   }
   video#scanVideo{
@@ -374,6 +383,20 @@
     border:1px solid var(--line);
     margin:10px 0;
   }
+  .scan-status{
+    min-height:1.4em;
+    margin:8px 0 0;
+    color:var(--sub);
+    font-size:0.78rem;
+  }
+  .scan-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:8px;
+  }
+  .scan-actions .big-btn{padding:10px 8px;}
+  #scanFile{display:none;}
   .match-result{
     background:var(--panel-light);
     border:1px solid var(--line);
@@ -518,6 +541,8 @@
 
   const ALL_IDS = [];
   OZZIES.forEach(s => s.items.forEach(name => ALL_IDS.push(setKey(s.set, name))));
+  const QR_ITEMS = [];
+  OZZIES.forEach(s => s.items.forEach(name => QR_ITEMS.push({n:name, s:s.set})));
 
   function setKey(set, name){ return set + "::" + name; }
   function imgPath(set, name){
@@ -711,6 +736,23 @@
       if(state.counts[id] > 1) dupes.push({id, name, set:s.set, label:s.label, count:state.counts[id]});
     }));
 
+    const offering = [];
+    let totalOffered = 0;
+    OZZIES.forEach(s => s.items.forEach(name => {
+      const id = setKey(s.set, name);
+      if(state.swap[id] > 0){
+        offering.push(`${name} (${state.swap[id]})`);
+        totalOffered += state.swap[id];
+      }
+    }));
+
+    const summary = document.createElement('div');
+    summary.className = 'want-summary';
+    summary.innerHTML = offering.length
+      ? `Offering <span class="swap-total">${totalOffered}</span> total: ${offering.join(', ')}`
+      : `Choose how many duplicates you're happy to offer.`;
+    root.appendChild(summary);
+
     if(dupes.length === 0){
       root.innerHTML = `<div class="empty-msg">No duplicates yet. Once you have more than 1 of an Ooshie, it'll show up here so you can mark how many you're happy to swap.</div>`;
       return;
@@ -762,23 +804,23 @@
     const root = document.getElementById('view-want');
     root.innerHTML = "";
 
-    const offering = [];
-    let totalOffered = 0;
+    const wanted = [];
+    let totalWanted = 0;
     OZZIES.forEach(s => s.items.forEach(name => {
       const id = setKey(s.set, name);
-      if(state.swap[id] > 0){
-        offering.push({id, name, qty: state.swap[id]});
-        totalOffered += state.swap[id];
+      if(state.want[id] > 0){
+        wanted.push({id, name, qty: state.want[id]});
+        totalWanted += state.want[id];
       }
     }));
 
     const summary = document.createElement('div');
     summary.className = 'want-summary';
-    if(offering.length === 0){
+    if(wanted.length === 0){
       summary.innerHTML = `Pick anything below that you'd like.`;
     } else {
-      const offerLines = offering.map(o => `${o.name} (${o.qty})`).join(', ');
-      summary.innerHTML = `Offering <span class="swap-total">${totalOffered}</span> total: ${offerLines}`;
+      const wantLines = wanted.map(o => `${o.name} (${o.qty})`).join(', ');
+      summary.innerHTML = `Wanting <span class="swap-total">${totalWanted}</span> total: ${wantLines}`;
     }
     root.appendChild(summary);
 
@@ -845,7 +887,7 @@
   let scanStream = null;
   let scanRAF = null;
 
-  function buildMyPayload(){
+  function buildMyTradeLists(){
     const offer = [];
     const want = [];
     OZZIES.forEach(s => s.items.forEach(name => {
@@ -854,6 +896,30 @@
       if(state.want[id] > 0) want.push({n: name, s: s.set, q: state.want[id]});
     }));
     return { offer, want };
+  }
+
+  function buildMyPayload(){
+    const offer = [];
+    const want = [];
+    QR_ITEMS.forEach((item, index) => {
+      const id = setKey(item.s, item.n);
+      if(state.swap[id] > 0) offer.push([index, state.swap[id]]);
+      if(state.want[id] > 0) want.push([index, state.want[id]]);
+    });
+    return { v:2, o:offer, w:want };
+  }
+
+  function expandScannedPayload(payload){
+    if(payload && payload.v === 2 && Array.isArray(payload.o) && Array.isArray(payload.w)){
+      const expand = rows => rows.map(row => {
+        const item = QR_ITEMS[row[0]];
+        const qty = Number(row[1]);
+        return item && Number.isFinite(qty) && qty > 0 ? {n:item.n, s:item.s, q:qty} : null;
+      }).filter(Boolean);
+      return {offer:expand(payload.o), want:expand(payload.w)};
+    }
+    if(payload && Array.isArray(payload.offer) && Array.isArray(payload.want)) return payload;
+    throw new Error('invalid payload');
   }
 
   function renderMatch(){
@@ -878,6 +944,12 @@
       <button class="big-btn secondary" id="scanQrBtn">Scan a QR Code</button>
       <video id="scanVideo" style="display:none;" playsinline muted></video>
       <canvas id="scanCanvas" style="display:none;"></canvas>
+      <div class="scan-actions">
+        <button class="big-btn secondary" id="scanPhotoBtn">Scan from Photo</button>
+        <button class="big-btn secondary" id="stopScanBtn" style="display:none;">Stop Camera</button>
+      </div>
+      <input id="scanFile" type="file" accept="image/*">
+      <div class="scan-status" id="scanStatus" aria-live="polite"></div>
     `;
     root.appendChild(scanSection);
 
@@ -894,15 +966,15 @@
           return;
         }
         const payload = buildMyPayload();
-        if(payload.offer.length === 0 && payload.want.length === 0){
+        if(payload.o.length === 0 && payload.w.length === 0){
           wrap.innerHTML = `<div class="no-match">Mark some Ooshies to swap and want first, on the Swap and Want tabs.</div>`;
           return;
         }
         const json = JSON.stringify(payload);
         new QRCode(wrap, {
           text: json,
-          width: 220,
-          height: 220,
+          width: 260,
+          height: 260,
           colorDark: '#000000',
           colorLight: '#ffffff',
           correctLevel: QRCode.CorrectLevel.M
@@ -914,33 +986,51 @@
     });
 
     document.getElementById('scanQrBtn').addEventListener('click', startScan);
+    document.getElementById('stopScanBtn').addEventListener('click', stopScan);
+    document.getElementById('scanPhotoBtn').addEventListener('click', () => document.getElementById('scanFile').click());
+    document.getElementById('scanFile').addEventListener('change', scanSelectedPhoto);
   }
 
-  function startScan(){
+  async function startScan(){
     const video = document.getElementById('scanVideo');
     const canvas = document.getElementById('scanCanvas');
-    video.style.display = 'block';
+    const status = document.getElementById('scanStatus');
+    const stopBtn = document.getElementById('stopScanBtn');
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      .then(stream => {
-        scanStream = stream;
-        video.srcObject = stream;
-        video.setAttribute('playsinline', true);
-        video.play();
-        scanRAF = requestAnimationFrame(tickScan);
-      })
-      .catch(() => {
-        document.getElementById('matchResults').innerHTML = `<div class="no-match">Camera access was blocked or unavailable. Check your browser's camera permission for this site.</div>`;
+    if(typeof jsQR === 'undefined'){
+      status.textContent = 'The QR scanner could not load. Reload the page and try again.';
+      return;
+    }
+
+    stopScan();
+    video.style.display = 'block';
+    stopBtn.style.display = 'block';
+    status.textContent = 'Starting camera. Point it at the full QR code and hold still.';
+
+    try{
+      scanStream = await navigator.mediaDevices.getUserMedia({
+        video: {facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720}},
+        audio: false
       });
+      video.srcObject = scanStream;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('autoplay', '');
+      await video.play();
+      status.textContent = 'Scanning. Keep the full QR code inside the camera view.';
+      scanRAF = requestAnimationFrame(tickScan);
+    }catch(e){
+      stopScan();
+      status.textContent = 'Camera access was blocked or unavailable. Allow camera access, or use Scan from Photo.';
+    }
 
     function tickScan(){
       if(video.readyState === video.HAVE_ENOUGH_DATA){
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', {willReadFrequently:true});
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {inversionAttempts:'attemptBoth'});
         if(code){
           stopScan();
           handleScannedPayload(code.data);
@@ -955,16 +1045,53 @@
     if(scanRAF) cancelAnimationFrame(scanRAF);
     if(scanStream) scanStream.getTracks().forEach(t => t.stop());
     const video = document.getElementById('scanVideo');
-    if(video) video.style.display = 'none';
+    if(video){
+      video.pause();
+      video.srcObject = null;
+      video.style.display = 'none';
+    }
+    const stopBtn = document.getElementById('stopScanBtn');
+    if(stopBtn) stopBtn.style.display = 'none';
+    scanRAF = null;
+    scanStream = null;
+  }
+
+  function scanSelectedPhoto(event){
+    const file = event.target.files && event.target.files[0];
+    const status = document.getElementById('scanStatus');
+    if(!file || typeof jsQR === 'undefined') return;
+    status.textContent = 'Reading QR code from photo.';
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('scanCanvas');
+      const maxSide = 1800;
+      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      const ctx = canvas.getContext('2d', {willReadFrequently:true});
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {inversionAttempts:'attemptBoth'});
+      URL.revokeObjectURL(img.src);
+      event.target.value = '';
+      if(code){
+        status.textContent = 'QR code found.';
+        handleScannedPayload(code.data);
+      }else{
+        status.textContent = 'No QR code was found in that photo. Try a closer, sharper photo with the full code visible.';
+      }
+    };
+    img.onerror = () => { status.textContent = 'That photo could not be read. Please try another image.'; };
+    img.src = URL.createObjectURL(file);
   }
 
   function handleScannedPayload(raw){
     let theirs;
-    try{ theirs = JSON.parse(raw); }catch(e){
+    try{ theirs = expandScannedPayload(JSON.parse(raw)); }catch(e){
       document.getElementById('matchResults').innerHTML = `<div class="no-match">That QR code doesn't look like an Ooshie swap code.</div>`;
       return;
     }
-    const mine = buildMyPayload();
+    const mine = buildMyTradeLists();
 
     const iGiveThem = mine.offer.filter(o => theirs.want.some(w => w.n === o.n && w.s === o.s));
     const theyGiveMe = theirs.offer.filter(o => mine.want.some(w => w.n === o.n && w.s === o.s));
