@@ -380,20 +380,6 @@
     font-weight:700;
     color:var(--coral);
   }
-  .swap-summary-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-  }
-  .swap-summary-copy{
-    min-width:0;
-    flex:1 1 auto;
-  }
-  .swap-summary-row .entry-mode-btn{
-    flex:0 0 auto;
-  }
-
   .want-card{
     background:var(--panel);
     border:1px solid var(--line);
@@ -591,7 +577,7 @@
 <header>
   <div class="header-title-row">
     <h1>Ooshie Tracker</h1>
-    <a class="kofi-link" href="https://ko-fi.com/techtyra" target="_blank" rel="noopener" aria-label="Support TechTyra on Ko-fi">&#9749; Support on Ko-fi</a>
+    <a class="kofi-link" href="https://ko-fi.com/techtyra" target="_blank" rel="noopener" aria-label="Leave a tip for the developer on Ko-fi">&#9749; Leave a tip</a>
   </div>
   <div class="tag">40 characters &middot; track, swap, want, match</div>
 </header>
@@ -900,7 +886,9 @@
     const dupes = [];
     OZZIES.forEach(s => s.items.forEach(name => {
       const id = setKey(s.set, name);
-      if(state.counts[id] > 1) dupes.push({id, name, set:s.set, label:s.label, count:state.counts[id]});
+      if(state.counts[id] > 1 && (!characterSearch || name.toLowerCase().includes(characterSearch))){
+        dupes.push({id, name, set:s.set, label:s.label, count:state.counts[id]});
+      }
     }));
 
     const offering = [];
@@ -915,27 +903,15 @@
 
     const summary = document.createElement('div');
     summary.className = 'want-summary';
-    const summaryRow = document.createElement('div');
-    summaryRow.className = 'swap-summary-row';
-    const summaryCopy = document.createElement('div');
-    summaryCopy.className = 'swap-summary-copy';
-    summaryCopy.innerHTML = offering.length
+    summary.innerHTML = offering.length
       ? `Offering <span class="swap-total">${totalOffered}</span> total: ${offering.join(', ')}`
       : `Choose how many duplicates you're happy to offer.`;
-    summaryRow.appendChild(summaryCopy);
-    const swapEntryModeBtn = document.createElement('button');
-    swapEntryModeBtn.className = 'entry-mode-btn';
-    swapEntryModeBtn.type = 'button';
-    swapEntryModeBtn.textContent = entryMode === 'type' ? 'Entry: Type' : 'Entry: Buttons';
-    swapEntryModeBtn.addEventListener('click', toggleEntryMode);
-    summaryRow.appendChild(swapEntryModeBtn);
-    summary.appendChild(summaryRow);
     const conflicts = conflictNames();
     if(conflicts.length) summary.insertAdjacentHTML('beforeend', `<div class="conflict-alert">Also marked as wanted: ${conflicts.join(', ')}. Check these quantities before generating your QR.</div>`);
     root.appendChild(summary);
 
     if(dupes.length === 0){
-      root.innerHTML = `<div class="empty-msg">No duplicates yet. Once you have more than 1 of an Ooshie, it'll show up here so you can mark how many you're happy to swap.</div>`;
+      root.innerHTML = `<div class="empty-msg">${characterSearch ? 'No matching duplicates found.' : `No duplicates yet. Once you have more than 1 of an Ooshie, it'll show up here so you can mark how many you're happy to swap.`}</div>`;
       return;
     }
 
@@ -1318,8 +1294,8 @@
     const tools = document.getElementById('entryTools');
     const search = document.getElementById('characterSearch');
     const entryModeBtn = document.getElementById('entryModeBtn');
-    tools.style.display = (activeTop === 'collection' || activeTop === 'want') ? 'flex' : 'none';
-    search.style.display = (activeTop === 'collection' || activeTop === 'want') ? '' : 'none';
+    tools.style.display = activeTop === 'match' ? 'none' : 'flex';
+    search.style.display = activeTop === 'match' ? 'none' : '';
     entryModeBtn.textContent = entryMode === 'type' ? 'Entry: Type' : 'Entry: Buttons';
 
     if(activeTop !== 'match') stopScan();
@@ -1344,6 +1320,7 @@
     characterSearch = e.target.value.trim().toLowerCase();
     renderSetTabs();
     if(activeTop === 'collection') renderCollection();
+    if(activeTop === 'swap') renderSwap();
     if(activeTop === 'want') renderWant();
   });
 
