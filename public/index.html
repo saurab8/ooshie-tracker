@@ -380,6 +380,19 @@
     font-weight:700;
     color:var(--coral);
   }
+  .swap-summary-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .swap-summary-copy{
+    min-width:0;
+    flex:1 1 auto;
+  }
+  .swap-summary-row .entry-mode-btn{
+    flex:0 0 auto;
+  }
 
   .want-card{
     background:var(--panel);
@@ -902,11 +915,23 @@
 
     const summary = document.createElement('div');
     summary.className = 'want-summary';
-    summary.innerHTML = offering.length
+    const summaryRow = document.createElement('div');
+    summaryRow.className = 'swap-summary-row';
+    const summaryCopy = document.createElement('div');
+    summaryCopy.className = 'swap-summary-copy';
+    summaryCopy.innerHTML = offering.length
       ? `Offering <span class="swap-total">${totalOffered}</span> total: ${offering.join(', ')}`
       : `Choose how many duplicates you're happy to offer.`;
+    summaryRow.appendChild(summaryCopy);
+    const swapEntryModeBtn = document.createElement('button');
+    swapEntryModeBtn.className = 'entry-mode-btn';
+    swapEntryModeBtn.type = 'button';
+    swapEntryModeBtn.textContent = entryMode === 'type' ? 'Entry: Type' : 'Entry: Buttons';
+    swapEntryModeBtn.addEventListener('click', toggleEntryMode);
+    summaryRow.appendChild(swapEntryModeBtn);
+    summary.appendChild(summaryRow);
     const conflicts = conflictNames();
-    if(conflicts.length) summary.innerHTML += `<div class="conflict-alert">Also marked as wanted: ${conflicts.join(', ')}. Check these quantities before generating your QR.</div>`;
+    if(conflicts.length) summary.insertAdjacentHTML('beforeend', `<div class="conflict-alert">Also marked as wanted: ${conflicts.join(', ')}. Check these quantities before generating your QR.</div>`);
     root.appendChild(summary);
 
     if(dupes.length === 0){
@@ -1096,13 +1121,13 @@
     scanSection.innerHTML = `
       <h3>Scan Their Code</h3>
       <p>Scan someone else's QR to see if you can swap.</p>
-      <button class="big-btn secondary" id="scanQrBtn">Scan a QR Code</button>
+      <div class="scan-actions">
+        <button class="big-btn secondary" id="scanQrBtn">Scan a QR Code</button>
+        <button class="big-btn secondary" id="scanPhotoBtn">Scan from Photo</button>
+      </div>
       <video id="scanVideo" style="display:none;" playsinline muted></video>
       <canvas id="scanCanvas" style="display:none;"></canvas>
-      <div class="scan-actions">
-        <button class="big-btn secondary" id="scanPhotoBtn">Scan from Photo</button>
-        <button class="big-btn secondary" id="stopScanBtn" style="display:none;">Stop Camera</button>
-      </div>
+      <button class="big-btn secondary" id="stopScanBtn" style="display:none;margin-top:8px;">Stop Camera</button>
       <input id="scanFile" type="file" accept="image/*">
       <div class="scan-status" id="scanStatus" aria-live="polite"></div>
     `;
@@ -1292,9 +1317,10 @@
     document.getElementById('view-match').style.display = activeTop === 'match' ? '' : 'none';
     const tools = document.getElementById('entryTools');
     const search = document.getElementById('characterSearch');
-    tools.style.display = activeTop === 'match' ? 'none' : 'flex';
+    const entryModeBtn = document.getElementById('entryModeBtn');
+    tools.style.display = (activeTop === 'collection' || activeTop === 'want') ? 'flex' : 'none';
     search.style.display = (activeTop === 'collection' || activeTop === 'want') ? '' : 'none';
-    document.getElementById('entryModeBtn').textContent = entryMode === 'type' ? 'Entry: Type' : 'Entry: Buttons';
+    entryModeBtn.textContent = entryMode === 'type' ? 'Entry: Type' : 'Entry: Buttons';
 
     if(activeTop !== 'match') stopScan();
 
@@ -1321,11 +1347,13 @@
     if(activeTop === 'want') renderWant();
   });
 
-  document.getElementById('entryModeBtn').addEventListener('click', () => {
+  function toggleEntryMode(){
     entryMode = entryMode === 'buttons' ? 'type' : 'buttons';
     try{ localStorage.setItem(ENTRY_MODE_KEY, entryMode); }catch(e){}
     renderActiveTop();
-  });
+  }
+
+  document.getElementById('entryModeBtn').addEventListener('click', toggleEntryMode);
 
   const resetConfirm = document.getElementById('resetConfirm');
   document.getElementById('resetDataBtn').addEventListener('click', () => {
