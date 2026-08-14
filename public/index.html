@@ -62,12 +62,36 @@
     z-index:20;
     flex-shrink:0;
   }
+  .header-title-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
   header h1{
     margin:0;
     font-size:1.25rem;
     font-weight:700;
     letter-spacing:-0.01em;
     color:var(--gold);
+  }
+  .kofi-link{
+    display:inline-flex;
+    align-items:center;
+    min-height:28px;
+    padding:4px 9px;
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:999px;
+    background:rgba(47,61,130,0.72);
+    color:var(--ink);
+    font-size:0.68rem;
+    font-weight:700;
+    line-height:1;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .kofi-link:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
   }
   header .tag{
     font-size:0.72rem;
@@ -272,6 +296,56 @@
     font-size:1.05rem;
     color:var(--ink);
   }
+  .manual-qty{
+    width:62px;
+    min-height:38px;
+    border:1px solid var(--gold);
+    border-radius:9px;
+    background:rgba(255,255,255,0.08);
+    color:var(--ink);
+    font:700 1rem inherit;
+    text-align:center;
+  }
+  .entry-tools{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .character-search{
+    flex:1;
+    min-width:0;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    background:var(--panel);
+    color:var(--ink);
+    font:inherit;
+    font-size:16px;
+  }
+  .character-search::placeholder{color:var(--sub);opacity:0.8;}
+  .entry-mode-btn{
+    flex:0 0 auto;
+    min-height:38px;
+    padding:7px 10px;
+    border:1px solid var(--gold);
+    border-radius:9px;
+    background:transparent;
+    color:var(--gold);
+    font-size:0.72rem;
+    font-weight:700;
+  }
+  .conflict-card{border-color:var(--coral);box-shadow:0 0 0 1px var(--coral);}
+  .conflict-alert{
+    margin-top:8px;
+    padding:8px 10px;
+    border-radius:8px;
+    background:rgba(232,103,79,0.18);
+    color:#ffd6cf;
+    font-size:0.78rem;
+    line-height:1.35;
+  }
+  .conflict-badge{color:#ffd6cf !important;}
 
   .swap-card{
     background:var(--panel);
@@ -451,6 +525,27 @@
     text-decoration:none;
     font-weight:600;
   }
+  .reset-link{
+    margin:3px 0 0;
+    padding:0;
+    border:0;
+    background:none;
+    color:var(--sub);
+    font:inherit;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+  .reset-confirm{margin-top:5px;}
+  .reset-confirm button{
+    margin:0 3px;
+    padding:4px 8px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--panel-light);
+    color:var(--ink);
+    font-size:0.68rem;
+  }
+  .reset-confirm .danger{border-color:var(--coral);color:#ffd6cf;}
 
   .save-flash{
     position:fixed;
@@ -481,7 +576,10 @@
 <body>
 
 <header>
-  <h1>Ooshie Tracker</h1>
+  <div class="header-title-row">
+    <h1>Ooshie Tracker</h1>
+    <a class="kofi-link" href="https://ko-fi.com/techtyra" target="_blank" rel="noopener" aria-label="Support TechTyra on Ko-fi">&#9749; Support on Ko-fi</a>
+  </div>
   <div class="tag">40 characters &middot; track, swap, want, match</div>
 </header>
 
@@ -504,6 +602,10 @@
 
 <div id="appMain">
   <main>
+    <div class="entry-tools" id="entryTools">
+      <input class="character-search" id="characterSearch" type="search" placeholder="Search all 40 characters" aria-label="Search characters">
+      <button class="entry-mode-btn" id="entryModeBtn" type="button">Entry: Buttons</button>
+    </div>
     <div id="view-collection"></div>
     <div id="view-swap" style="display:none;"></div>
     <div id="view-want" style="display:none;"></div>
@@ -519,6 +621,12 @@
   &middot; <a href="privacy.html">Privacy</a>
   &middot; <a href="terms.html">Terms</a>
   &middot; <a href="contact.html">Contact</a>
+  <br><button class="reset-link" id="resetDataBtn" type="button">Clear Tracker Data</button>
+  <div class="reset-confirm" id="resetConfirm" hidden>
+    Clear all collection, swap and want quantities?
+    <button class="danger" id="confirmResetBtn" type="button">Clear Data</button>
+    <button id="cancelResetBtn" type="button">Cancel</button>
+  </div>
 </footer>
 
 <script>
@@ -546,16 +654,61 @@
 
   function setKey(set, name){ return set + "::" + name; }
   function imgPath(set, name){
+    if(set === 'Pixar' && name === 'Sully') return 'images/pixar/sulley.jpg';
     return `images/${slugify(set)}/${slugify(name)}.jpg`;
   }
 
   const STORAGE_KEY = "ozzie-tracker-data-v2";
   const USER_FLAG_KEY = "ozzie-tracker-counted-v1";
+  const ENTRY_MODE_KEY = "ozzie-tracker-entry-mode-v1";
 
   let state = loadState();
   let activeSetIndex = 0;
   let activeWantSetIndex = 0;
   let activeTop = 'collection';
+  let characterSearch = '';
+  let entryMode = 'buttons';
+  try{ entryMode = localStorage.getItem(ENTRY_MODE_KEY) === 'type' ? 'type' : 'buttons'; }catch(e){}
+
+  function quantityControl(id, value, kind, label, max){
+    if(entryMode === 'type'){
+      return `<input class="manual-qty" type="number" inputmode="numeric" min="0" max="${max}" value="${value}" data-manual="${kind}" data-id="${id}" aria-label="${label}">`;
+    }
+    const prefix = kind === 'count' ? '' : kind;
+    return `<span class="stepper">
+      <button data-action="${prefix}dec" data-id="${id}" aria-label="Decrease ${label}">−</button>
+      <span class="qty">${value}</span>
+      <button data-action="${prefix}inc" data-id="${id}" ${kind === 'swap' ? `data-max="${max}"` : ''} aria-label="Increase ${label}">+</button>
+    </span>`;
+  }
+
+  function conflictNames(){
+    return QR_ITEMS.filter(item => {
+      const id = setKey(item.s, item.n);
+      return (state.swap[id] || 0) > 0 && (state.want[id] || 0) > 0;
+    }).map(item => item.n);
+  }
+
+  function addManualListeners(root, rerender){
+    root.querySelectorAll('input[data-manual]').forEach(input => {
+      const applyValue = () => {
+        const id = input.getAttribute('data-id');
+        const kind = input.getAttribute('data-manual');
+        const max = parseInt(input.getAttribute('max') || '99', 10);
+        const value = Math.max(0, Math.min(max, parseInt(input.value || '0', 10) || 0));
+        const target = kind === 'count' ? state.counts : kind === 'swap' ? state.swap : state.want;
+        const previous = target[id] || 0;
+        target[id] = value;
+        if(kind === 'count' && state.swap[id] > value) state.swap[id] = value;
+        if(value === 0 && kind === 'want') delete state.want[id];
+        if(value !== previous) recordTrackerUse();
+        saveState();
+        updateProgress();
+      };
+      input.addEventListener('input', applyValue);
+      input.addEventListener('change', rerender);
+    });
+  }
 
   function loadState(){
     let raw = null;
@@ -642,7 +795,7 @@
 
   function renderSetTabs(){
     const nav = document.getElementById('setTabs');
-    if(activeTop !== 'collection'){
+    if(activeTop !== 'collection' || characterSearch){
       nav.style.display = 'none';
       return;
     }
@@ -666,23 +819,30 @@
     const root = document.getElementById('view-collection');
     root.innerHTML = "";
     const s = OZZIES[activeSetIndex];
+    const searchResults = characterSearch
+      ? QR_ITEMS.filter(item => item.n.toLowerCase().includes(characterSearch))
+      : s.items.map(name => ({n:name, s:s.set}));
 
     const block = document.createElement('div');
     block.className = 'set-block';
 
-    const haveInSet = s.items.filter(n => state.counts[setKey(s.set,n)] > 0).length;
+    const haveInSet = searchResults.filter(item => state.counts[setKey(item.s,item.n)] > 0).length;
     const title = document.createElement('div');
     title.className = 'set-title';
-    title.innerHTML = `<span>${s.label}</span><span>${haveInSet}/${s.items.length}</span>`;
+    title.innerHTML = `<span>${characterSearch ? 'Search results' : s.label}</span><span>${haveInSet}/${searchResults.length}</span>`;
     block.appendChild(title);
 
-    s.items.forEach(name => {
-      const id = setKey(s.set, name);
+    if(searchResults.length === 0) block.innerHTML += `<div class="empty-msg">No character names match that search.</div>`;
+
+    searchResults.forEach(item => {
+      const name = item.n;
+      const set = item.s;
+      const id = setKey(set, name);
       const qty = state.counts[id];
       const card = document.createElement('div');
       card.className = 'ozzie-card ' + (qty > 0 ? 'have' : 'missing');
 
-      card.appendChild(photoTile(s.set, name));
+      card.appendChild(photoTile(set, name));
 
       const dot = document.createElement('span');
       dot.className = 'ozzie-status-dot';
@@ -690,17 +850,10 @@
 
       const nameSpan = document.createElement('span');
       nameSpan.className = 'ozzie-name';
-      nameSpan.innerHTML = `${name}${qty > 1 ? `<span class="badge">${qty} in hand</span>` : ''}`;
+      nameSpan.innerHTML = `${name}${characterSearch ? `<span class="badge">${set}</span>` : qty > 1 ? `<span class="badge">${qty} in hand</span>` : ''}`;
       card.appendChild(nameSpan);
 
-      const stepper = document.createElement('span');
-      stepper.className = 'stepper';
-      stepper.innerHTML = `
-        <button data-action="dec" data-id="${id}" aria-label="Decrease ${name}">–</button>
-        <span class="qty">${qty}</span>
-        <button data-action="inc" data-id="${id}" aria-label="Increase ${name}">+</button>
-      `;
-      card.appendChild(stepper);
+      card.insertAdjacentHTML('beforeend', quantityControl(id, qty, 'count', name, 99));
 
       block.appendChild(card);
     });
@@ -724,6 +877,7 @@
         renderCollection();
       });
     });
+    addManualListeners(root, renderCollection);
   }
 
   function renderSwap(){
@@ -751,6 +905,8 @@
     summary.innerHTML = offering.length
       ? `Offering <span class="swap-total">${totalOffered}</span> total: ${offering.join(', ')}`
       : `Choose how many duplicates you're happy to offer.`;
+    const conflicts = conflictNames();
+    if(conflicts.length) summary.innerHTML += `<div class="conflict-alert">Also marked as wanted: ${conflicts.join(', ')}. Check these quantities before generating your QR.</div>`;
     root.appendChild(summary);
 
     if(dupes.length === 0){
@@ -761,23 +917,17 @@
     dupes.forEach(d => {
       const swapQty = Math.min(state.swap[d.id] || 0, d.count);
       const card = document.createElement('div');
-      card.className = 'swap-card';
+      const conflict = (state.want[d.id] || 0) > 0 && swapQty > 0;
+      card.className = 'swap-card' + (conflict ? ' conflict-card' : '');
 
       card.appendChild(photoTile(d.set, d.name));
 
       const nameSpan = document.createElement('span');
       nameSpan.className = 'ozzie-name';
-      nameSpan.innerHTML = `${d.name}<span class="badge">have ${d.count} &middot; ${d.label}</span>`;
+      nameSpan.innerHTML = `${d.name}<span class="badge${conflict ? ' conflict-badge' : ''}">${conflict ? 'Also marked as wanted · ' : ''}have ${d.count} &middot; ${d.label}</span>`;
       card.appendChild(nameSpan);
 
-      const stepper = document.createElement('span');
-      stepper.className = 'stepper';
-      stepper.innerHTML = `
-        <button data-action="swapdec" data-id="${d.id}" aria-label="Decrease swap amount for ${d.name}">–</button>
-        <span class="qty">${swapQty}</span>
-        <button data-action="swapinc" data-id="${d.id}" data-max="${d.count}" aria-label="Increase swap amount for ${d.name}">+</button>
-      `;
-      card.appendChild(stepper);
+      card.insertAdjacentHTML('beforeend', quantityControl(d.id, swapQty, 'swap', `swap amount for ${d.name}`, d.count));
 
       root.appendChild(card);
     });
@@ -798,6 +948,7 @@
         renderSwap();
       });
     });
+    addManualListeners(root, renderSwap);
   }
 
   function renderWant(){
@@ -822,6 +973,8 @@
       const wantLines = wanted.map(o => `${o.name} (${o.qty})`).join(', ');
       summary.innerHTML = `Wanting <span class="swap-total">${totalWanted}</span> total: ${wantLines}`;
     }
+    const conflicts = conflictNames();
+    if(conflicts.length) summary.innerHTML += `<div class="conflict-alert">Also marked for swapping: ${conflicts.join(', ')}. Check these quantities before generating your QR.</div>`;
     root.appendChild(summary);
 
     const wantSetTabs = document.createElement('nav');
@@ -837,31 +990,32 @@
       });
       wantSetTabs.appendChild(btn);
     });
-    root.appendChild(wantSetTabs);
+    if(!characterSearch) root.appendChild(wantSetTabs);
 
     const s = OZZIES[activeWantSetIndex];
+    const wantItems = characterSearch
+      ? QR_ITEMS.filter(item => item.n.toLowerCase().includes(characterSearch))
+      : s.items.map(name => ({n:name, s:s.set}));
     const block = document.createElement('div');
     block.className = 'set-block';
 
-    s.items.forEach(name => {
-      const id = setKey(s.set, name);
+    if(wantItems.length === 0) block.innerHTML = `<div class="empty-msg">No character names match that search.</div>`;
+
+    wantItems.forEach(item => {
+      const name = item.n;
+      const set = item.s;
+      const id = setKey(set, name);
       const owned = state.counts[id] > 0;
       const wantQty = state.want[id] || 0;
       const card = document.createElement('div');
-      card.className = 'want-card';
-      card.appendChild(photoTile(s.set, name));
+      const conflict = (state.swap[id] || 0) > 0 && wantQty > 0;
+      card.className = 'want-card' + (conflict ? ' conflict-card' : '');
+      card.appendChild(photoTile(set, name));
       const nameSpan = document.createElement('span');
       nameSpan.className = 'ozzie-name';
-      nameSpan.innerHTML = `${name}${owned ? `<span class="badge" style="color:var(--sub)">already have ${state.counts[id]}</span>` : ''}`;
+      nameSpan.innerHTML = `${name}<span class="badge${conflict ? ' conflict-badge' : ''}" style="${conflict ? '' : 'color:var(--sub)'}">${conflict ? 'Also marked for swapping' : characterSearch ? set : owned ? `already have ${state.counts[id]}` : ''}</span>`;
       card.appendChild(nameSpan);
-      const stepper = document.createElement('span');
-      stepper.className = 'stepper';
-      stepper.innerHTML = `
-        <button data-action="wantdec" data-id="${id}" aria-label="Decrease want amount for ${name}">–</button>
-        <span class="qty">${wantQty}</span>
-        <button data-action="wantinc" data-id="${id}" aria-label="Increase want amount for ${name}">+</button>
-      `;
-      card.appendChild(stepper);
+      card.insertAdjacentHTML('beforeend', quantityControl(id, wantQty, 'want', `want amount for ${name}`, 99));
       block.appendChild(card);
     });
     root.appendChild(block);
@@ -882,6 +1036,7 @@
         renderWant();
       });
     });
+    addManualListeners(root, renderWant);
   }
 
   let scanStream = null;
@@ -1135,6 +1290,11 @@
     document.getElementById('view-swap').style.display = activeTop === 'swap' ? '' : 'none';
     document.getElementById('view-want').style.display = activeTop === 'want' ? '' : 'none';
     document.getElementById('view-match').style.display = activeTop === 'match' ? '' : 'none';
+    const tools = document.getElementById('entryTools');
+    const search = document.getElementById('characterSearch');
+    tools.style.display = activeTop === 'match' ? 'none' : 'flex';
+    search.style.display = (activeTop === 'collection' || activeTop === 'want') ? '' : 'none';
+    document.getElementById('entryModeBtn').textContent = entryMode === 'type' ? 'Entry: Type' : 'Entry: Buttons';
 
     if(activeTop !== 'match') stopScan();
 
@@ -1152,6 +1312,37 @@
       activeTop = btn.getAttribute('data-top');
       renderActiveTop();
     });
+  });
+
+  document.getElementById('characterSearch').addEventListener('input', e => {
+    characterSearch = e.target.value.trim().toLowerCase();
+    renderSetTabs();
+    if(activeTop === 'collection') renderCollection();
+    if(activeTop === 'want') renderWant();
+  });
+
+  document.getElementById('entryModeBtn').addEventListener('click', () => {
+    entryMode = entryMode === 'buttons' ? 'type' : 'buttons';
+    try{ localStorage.setItem(ENTRY_MODE_KEY, entryMode); }catch(e){}
+    renderActiveTop();
+  });
+
+  const resetConfirm = document.getElementById('resetConfirm');
+  document.getElementById('resetDataBtn').addEventListener('click', () => {
+    resetConfirm.hidden = false;
+  });
+  document.getElementById('cancelResetBtn').addEventListener('click', () => {
+    resetConfirm.hidden = true;
+  });
+  document.getElementById('confirmResetBtn').addEventListener('click', () => {
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    state = loadState();
+    characterSearch = '';
+    document.getElementById('characterSearch').value = '';
+    resetConfirm.hidden = true;
+    updateProgress();
+    renderActiveTop();
+    flashSave();
   });
 
   updateProgress();
